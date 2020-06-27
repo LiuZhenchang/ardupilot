@@ -291,6 +291,43 @@ void Plane::Log_Write_RC(void)
     Log_Write_AETR();
 }
 
+/////////////////////////////////// INDI Log //////////////////////////////////////
+
+struct PACKED log_INDI_V {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float V;
+    float d_V1;
+    float d_V2;
+    float d_V3;
+    float ab1_x;
+    float ab1_y;
+    float ab1_z;
+    float ab2_x;
+    float ab2_y;
+    float ab2_z;
+};
+
+void Plane::Log_Write_INDI_V(void)
+{
+    struct log_INDI_V pkt = {
+            LOG_PACKET_HEADER_INIT(LOG_INDIV_MSG),
+            time_us             : AP_HAL::micros64(),
+            V                   : INDI_controller.get_V(),
+            d_V1                :INDI_controller.get_d_V1(),
+            d_V2                :INDI_controller.get_d_V2(),
+            d_V3                :INDI_controller.get_d_V3(),
+            ab1_x               :INDI_controller.get_a_body_1().x,
+            ab1_y               :INDI_controller.get_a_body_1().y,
+            ab1_z               :INDI_controller.get_a_body_1().z,
+            ab2_x               :INDI_controller.get_a_body_2().x,
+            ab2_y               :INDI_controller.get_a_body_2().y,
+            ab2_z               :INDI_controller.get_a_body_2().z,
+        };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
+
 // type and unit information can be found in
 // libraries/DataFlash/Logstructure.h; search for "log_Units" for
 // units and "Format characters" for field type information
@@ -328,6 +365,10 @@ const struct LogStructure Plane::log_structure[] = {
       "PIQA", PID_FMT,  PID_LABELS, PID_UNITS, PID_MULTS }, \
     { LOG_AETR_MSG, sizeof(log_AETR), \
       "AETR", "Qhhhhh",  "TimeUS,Ail,Elev,Thr,Rudd,Flap", "s-----", "F-----" },  \
+
+      //INDI Log
+    { LOG_INDIV_MSG, sizeof(log_INDI_V),
+      "INDV", "Qffffffffff",  "TimeUS,V,d_V1,d_V2,d_V3,ab1_x,ab1_y,ab1_z,ab2_x,ab2_y,ab2_z", "snooooooooo", "F0000000000" },
 };
 
 void Plane::Log_Write_Vehicle_Startup_Messages()

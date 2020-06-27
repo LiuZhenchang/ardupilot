@@ -325,7 +325,8 @@ public:
         k_param_L1_controller,
         k_param_rcmap,
         k_param_TECS_controller,
-        k_param_rally_total_old,  //unused
+        k_param_INDI_controller,    //LZC INDI
+        //k_param_rally_total_old,  //unused
         k_param_steerController,
 
         //

@@ -239,6 +239,8 @@ const AP_Param::GroupInfo AP_TECS::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("SYNAIRSPEED", 27, AP_TECS, _use_synthetic_airspeed, 0),
     
+    AP_GROUPINFO("LZCTEST", 28, AP_TECS, _lzc_test, 0), //LZC Test
+
     AP_GROUPEND
 };
 
@@ -277,7 +279,7 @@ void AP_TECS::update_50hz(void)
 
     // Calculate time in seconds since last update
     uint64_t now = AP_HAL::micros64();
-    float DT = (now - _update_50hz_last_usec) * 1.0e-6f;
+    float DT = (now - _update_50hz_last_usec) * 1.0e-6f+_lzc_test; //LZC Test
     if (DT > 1.0f) {
         _climb_rate = 0.0f;
         _height_filter.dd_height = 0.0f;

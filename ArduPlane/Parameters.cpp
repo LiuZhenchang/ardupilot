@@ -1018,6 +1018,10 @@ const AP_Param::Info Plane::var_info[] = {
     // @Path: ../libraries/AP_TECS/AP_TECS.cpp
     GOBJECT(TECS_controller,         "TECS_",   AP_TECS),
 
+    // @Group: INDI_
+    // @Path: ../libraries/MW_INDI/MW_INDI.cpp
+    GOBJECT(INDI_controller,         "INDI_",   MW_INDI),
+
 #if MOUNT == ENABLED
     // @Group: MNT
     // @Path: ../libraries/AP_Mount/AP_Mount.cpp
@@ -1218,7 +1222,7 @@ const AP_Param::ConversionInfo conversion_table[] = {
     { Parameters::k_param_pack_capacity,      0,      AP_PARAM_INT32, "BATT_CAPACITY" },
     { Parameters::k_param_log_bitmask_old,    0,      AP_PARAM_INT16, "LOG_BITMASK" },
     { Parameters::k_param_rally_limit_km_old, 0,      AP_PARAM_FLOAT, "RALLY_LIMIT_KM" },
-    { Parameters::k_param_rally_total_old,    0,      AP_PARAM_INT8, "RALLY_TOTAL" },
+    //{ Parameters::k_param_rally_total_old,    0,      AP_PARAM_INT8, "RALLY_TOTAL" }, //LZC Caution
     { Parameters::k_param_serial0_baud,       0,      AP_PARAM_INT16, "SERIAL0_BAUD" },
     { Parameters::k_param_serial1_baud,       0,      AP_PARAM_INT16, "SERIAL1_BAUD" },
     { Parameters::k_param_serial2_baud,       0,      AP_PARAM_INT16, "SERIAL2_BAUD" },

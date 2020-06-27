@@ -75,6 +75,8 @@
 #include <AP_NavEKF3/AP_NavEKF3.h>
 #include <AP_Mission/AP_Mission.h>     // Mission command library
 
+#include <MW_INDI/MW_INDI.h>           //LZC INDI
+
 #include <AP_Soaring/AP_Soaring.h>
 #include <AP_Notify/AP_Notify.h>      // Notify library
 #include <AP_BattMonitor/AP_BattMonitor.h> // Battery monitor library
@@ -223,6 +225,7 @@ private:
 
     AP_TECS TECS_controller{ahrs, aparm, landing, g2.soaring_controller};
     AP_L1_Control L1_controller{ahrs, &TECS_controller};
+    MW_INDI INDI_controller{ahrs, aparm}; //LZC INDI controller
 
     // Attitude to servo controllers
     AP_RollController rollController{ahrs, aparm, DataFlash};
@@ -805,6 +808,7 @@ private:
     void Log_Write_Vehicle_Startup_Messages();
     void Log_Write_AOA_SSA();
     void Log_Write_AETR();
+    void Log_Write_INDI_V(); //INDI
 
     void load_parameters(void);
     void convert_mixers(void);
