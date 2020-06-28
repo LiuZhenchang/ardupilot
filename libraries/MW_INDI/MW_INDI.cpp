@@ -118,14 +118,15 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	AP_GROUPEND
 };
 
-//updata angle of attack and side slip angle
+/*******************************updata angle of attack and side slip angle************************************/
 void MW_INDI::update_AOA_SSA() 
 {
 	alpha = radians(_ahrs.getAOA());	//unit: rad
 	beta = radians(_ahrs.getSSA());		//unit: rad
 }
 
-//update velocity and acceleration 
+
+/************************************update velocity and acceleration****************************************/
 void MW_INDI::update_velocity()
 {
 	uint64_t now = AP_HAL::millis();
@@ -173,51 +174,49 @@ void MW_INDI::update_velocity()
 	d_V = d_V1;
 }
 
-//update mu
+/************************************************update mu***************************************************/
 void MW_INDI::update_bank_angle()
 {
 	//uint64_t now = AP_HAL::millis();
 	// use roll angle to repalce mu for temporary
-	float mu_1 = radians(0.01 * wrap_180_cd(_ahrs.roll_sensor));		//unit: rad
+	float mu_1 = radians(0.01 * wrap_180_cd(_ahrs.roll_sensor));	//unit: rad
 	mu = mu_1;
 }
 
-//updata chi and chi rate
+/*****************************************updata chi and chi rate********************************************/
 void MW_INDI::update_kinematic_azimuth_angle()
 {
 	uint64_t now = AP_HAL::millis();
-	// Deigned 3 methods to get chi and compared the difference between each method
-	// When velocity is small using yaw angle to replace chi
-	Vector2f groundspeed_vector = _ahrs.groundspeed_vector();
 
-/*
- *  float chi_1;    //unit: rad
+    ////////////////////////////////////////////// chi_1 //////////////////////////////////////////////////////
     if (velocity.x < 0 && velocity.y>0) { chi_1 = atanf(velocity.y / velocity.x) + M_PI; }
     else if (velocity.x < 0 && velocity.y < 0) { chi_1 = atanf(velocity.y / velocity.x) - M_PI; }
     else { chi_1 = atanf(velocity.y / velocity.x); }
- */
 
-	float chi_2;	//unit: rad
+    ////////////////////////////////////////////// chi_2 //////////////////////////////////////////////////////
+    Vector2f groundspeed_vector = _ahrs.groundspeed_vector();
 	if (groundspeed_vector.x < 0 && groundspeed_vector.y>0) { chi_2 = atanf(groundspeed_vector.y / groundspeed_vector.x) + M_PI; }
 	else if (groundspeed_vector.x < 0 && groundspeed_vector.y < 0) { chi_2 = atanf(groundspeed_vector.y / groundspeed_vector.x) - M_PI; }
 	else { chi_2 = atanf(groundspeed_vector.y / groundspeed_vector.x); }
 
-	float chi_3 = radians(0.01 * wrap_180_cd(_ahrs.yaw_sensor));		//unit: rad
+	////////////////////////////////////////////// chi_3 //////////////////////////////////////////////////////
+	chi_3 = radians(0.01 * wrap_180_cd(_ahrs.yaw_sensor));		    //unit: rad
 
+	//define chi
 	if (velocity.length() > 5) { chi = chi_2; }
 	else { chi = chi_3; }
 
-	// Designed 2 method to calculate the derivation of chi
-	//Method1
+    /////////////////////////////////////////////// d_chi1 /////////////////////////////////////////////////////
 	_chidot_filter.update(chi, now);
-	float d_chi1 = _chidot_filter.slope() * 1.0e3;
+	d_chi1 = _chidot_filter.slope() * 1.0e3;
 	// avoid the sudden change of d_chi value, when chi stride accross 180 degrees
 	if ((degrees(chi) > 175 || degrees(chi) < -175) && (abs(d_chi1 - d_chi_last) * 180 / M_PI) > 3) { d_chi1 = d_chi_last; }
 	else { d_chi_last = d_chi1; }
-	//Method2
-	//float d_chi2 = (1 / (V * cosf(gamma))) * (a.x * sinf(alpha) * sinf(mu) + a.y * cosf(mu) - a.z * cosf(alpha) * sinf(mu)); //unit: rad/s
 
-	//Determining which method to be used
+	/////////////////////////////////////////////// d_chi2 /////////////////////////////////////////////////////
+	d_chi2 = (1 / (V * cosf(gamma))) * (a.x * sinf(alpha) * sinf(mu) + a.y * cosf(mu) - a.z * cosf(alpha) * sinf(mu)); //unit: rad/s
+
+	//define d_chi
 	d_chi = d_chi1;
 }
 
@@ -225,24 +224,27 @@ void MW_INDI::update_kinematic_azimuth_angle()
 void MW_INDI::update_flight_path_angle() 
 {
 	uint64_t now = AP_HAL::millis();
-	// Deigned 3 methods to get chi and compared the difference between each method
-	// When velocity is small using yaw angle to replace chi
-	//Vector2f groundspeed_vector = _ahrs.groundspeed_vector();
-	// Deigned 3 methods to get gamma and compared the difference between each method
-	// When velocity is small using pitch angle to replace chi
-	float gamma_1 = asinf(-velocity.z / velocity.length());				//unit: rad
-	//float gamma_2 = atanf(-velocity.z / groundspeed_vector.length());	//unit: rad
-	//float gamma_3 = radians(0.01 * wrap_180_cd(_ahrs.pitch_sensor));	//unit: rad
 
-	if (velocity.length() > 5) { gamma = gamma_1; }
+	////////////////////////////////////////////// gamma_1 /////////////////////////////////////////////////////
+	gamma_1 = asinf(-velocity.z / velocity.length());				//unit: rad
+
+	////////////////////////////////////////////// gamma_2 /////////////////////////////////////////////////////
+	Vector2f groundspeed_vector = _ahrs.groundspeed_vector();
+	gamma_2 = atanf(-velocity.z / groundspeed_vector.length());	        //unit: rad
+
+	////////////////////////////////////////////// gamma_3 /////////////////////////////////////////////////////
+	gamma_3 = radians(0.01 * wrap_180_cd(_ahrs.pitch_sensor));	        //unit: rad
+
+	//define gamma
+	if (velocity.length() > 5) { gamma = gamma_1; }                     // When velocity is small using yaw angle to replace chi
 	else { gamma = gamma_1; }
 
-	// Designed 2 method to calculate the derivation of gamma
-	//Method1
+	////////////////////////////////////////////// d_gamma1 /////////////////////////////////////////////////////
 	_gammadot_filter.update(gamma, now);
-	float d_gamma1 = _gammadot_filter.slope() * 1.0e3;
-	//Method2
-	//float d_gamma2 = (1 / V) * (a.x * sinf(alpha) * cosf(mu) - a.y * sinf(mu) - a.z * cosf(alpha) * cosf(mu));	//unit: rad/s
+	d_gamma1 = _gammadot_filter.slope() * 1.0e3;
+
+	////////////////////////////////////////////// d_gamma2 /////////////////////////////////////////////////////
+	d_gamma2 = (1 / V) * (a.x * sinf(alpha) * cosf(mu) - a.y * sinf(mu) - a.z * cosf(alpha) * cosf(mu));	//unit: rad/s
 
 	//Determining which method to be used
 	d_gamma = d_gamma1;
@@ -362,7 +364,7 @@ void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Lo
 	///////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////Translational dynamic control lopp in INDI/////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////
-	float m = vehicle_mass; //mass unit kg
+	m = vehicle_mass; //mass unit kg
 	x1 = Vector3f(V, chi, gamma);
 	
 	//calculate desired velocity change rate
@@ -417,7 +419,7 @@ void MW_INDI::attitude_control()
 	//calculate desired flight path vector
 	d_x2_des = K_x2 * (x2_ref - x2);
 
-	Vector3f a = AP::ins().get_accel();
+	a = AP::ins().get_accel();
 	float d_chi_a = (1 / (V * cosf(gamma))) * (a.x * sinf(alpha) * sinf(mu) + a.y * cosf(mu) - a.z * cosf(alpha) * sinf(mu)); //unit: rad/s
 	//float d_gamma_a = (1 / V) * (a.x * sinf(alpha) * cosf(mu) - a.y * sinf(mu) - a.z * cosf(alpha) * cosf(mu) - GRAVITY_MSS * cosf(gamma));	//unit: rad/s
 
