@@ -808,10 +808,7 @@ private:
     void Log_Write_Vehicle_Startup_Messages();
     void Log_Write_AOA_SSA();
     void Log_Write_AETR();
-
-    //INDI
-    void Log_Write_INDI_V();
-    void Log_Write_INDI_VAngle();
+    void Log_Write_INDI_V(); //INDI
 
     void load_parameters(void);
     void convert_mixers(void);

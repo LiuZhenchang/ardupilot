@@ -58,19 +58,6 @@ public:
 	Vector3f get_a_body_1();
 	Vector3f get_a_body_2();
 
-	float get_chi_1();
-	float get_chi_2();
-	float get_chi_3();
-	float get_d_chi1();
-	float get_d_chi2();
-
-	float get_gamma_1();
-	float get_gamma_2();
-	float get_gamma_3();
-	float get_d_gamma1();
-	float get_d_gamma2();
-
-
 	// this supports the MW_INDI_* user settable parameters
 	static const struct AP_Param::GroupInfo var_info[];
 
@@ -100,7 +87,7 @@ private:
 	float X;			//position in the north direction
 	float Y;			//position in the east direction
 	float Z;			//position in the down direction
-	Vector3f x0;		//position vector
+	Vector3f x0;		//positon vector
 	
 	float X_ref;		//reference position in the north direction
 	float Y_ref;		//reference position in the east direction
@@ -126,29 +113,15 @@ private:
 	Vector3f a_body_2;  //acceleration in body axis acquired by gyroscope
 
 	float chi;			//kinematic azimuth angle
-	float chi_1;        //calculated by velocity
-	float chi_2;        //calculated by ground speed vector
-	float chi_3;        //yaw angle
-
 	float gamma;		//flight path angle
-	float gamma_1;      //calculated by velocity
-	float gamma_2;
-	float gamma_3;
-
 	Vector3f x1;		//flight path vector
 	Vector3f velocity;	//velocity vector
 	Vector3f a;			//acceleration in body axis
 
 	float d_V;			//the derivation of velocity
 	float d_chi;		//the derivation of kinematic azimuth angle
-	float d_chi1;       //chi 9 point derivative filter
-	float d_chi2;       //calculated by body axis acceleration
-	float d_chi_last;   //avoid the sudden change of d_chi value, when chi stride accross 180 degrees
-
 	float d_gamma;		//the derivation of flight path angle
-	float d_gamma1;     //gamma 9 point derivative filter
-	float d_gamma2;     //calculated by body axis acceleration
-
+	float d_chi_last;	//avoid the sudden change of d_chi value, when chi stride accross 180 degrees
 
 	// declares a 5point average filter using floats
 	AverageFilterFloat_Size5		_vdot1_filter;

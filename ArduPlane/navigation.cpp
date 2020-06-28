@@ -98,9 +98,8 @@ void Plane::navigate()
     // ---------------------------------------------------
     update_navigation();
 
-    INDI_controller.INDI_state_process_10HZ();  //INDI Test
-    Log_Write_INDI_V();                         //INDI Test
-    Log_Write_INDI_VAngle();                    //INDI Test
+    INDI_controller.update_velocity();  //INDI Test
+    Log_Write_INDI_V();                 //INDI Test
 }
 
 void Plane::calc_airspeed_errors()
