@@ -150,7 +150,8 @@ enum log_messages {
     LOG_PIQA_MSG,
     LOG_AETR_MSG,
     LOG_INDIV_MSG,
-    LOG_INDIVA_MSG,
+    LOG_INDICHI_MSG,
+    LOG_INDIGAM_MSG,
 };
 
 #define MASK_LOG_ATTITUDE_FAST          (1<<0)
