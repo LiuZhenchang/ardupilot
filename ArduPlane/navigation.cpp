@@ -97,11 +97,6 @@ void Plane::navigate()
     // control mode specific updates to navigation demands
     // ---------------------------------------------------
     update_navigation();
-
-
-    INDI_controller.update_velocity();     //INDI Test
-    //INDI_controller.INDI_state_process_10HZ();  //INDI Test
-    Log_Write_INDI_V();                           //INDI Test
 }
 
 void Plane::calc_airspeed_errors()

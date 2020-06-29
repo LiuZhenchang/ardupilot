@@ -632,6 +632,14 @@ bool Plane::verify_nav_wp(const AP_Mission::Mission_Command& cmd)
         nav_controller->update_waypoint(current_loc, flex_next_WP_loc);
     }
 
+    /////////////////////////////////////////////// INDI Controller Test///////////////////////////////////////////////////////////
+    //INDI_controller.update_velocity();                    //INDI Test
+    INDI_controller.INDI_state_process_10HZ();              //INDI Test
+    Log_Write_INDI_V();                                     //INDI Test
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
     // see if the user has specified a maximum distance to waypoint
     // If override with p3 - then this is not used as it will overfly badly
     if (g.waypoint_max_radius > 0 &&
@@ -650,9 +658,9 @@ bool Plane::verify_nav_wp(const AP_Mission::Mission_Command& cmd)
         // allow user to override acceptance radius
         acceptance_distance_m = cmd_acceptance_distance;
     } else if (cmd_passby == 0) {
-        acceptance_distance_m = nav_controller->turn_distance(g.waypoint_radius, auto_state.next_turn_angle);
+        //acceptance_distance_m = nav_controller->turn_distance(g.waypoint_radius, auto_state.next_turn_angle); //LZC INDI Modified
     } else {
-
+        acceptance_distance_m = 30;
     }
     
     if (auto_state.wp_distance <= acceptance_distance_m) {

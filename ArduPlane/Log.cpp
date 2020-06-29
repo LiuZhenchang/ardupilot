@@ -327,6 +327,41 @@ void Plane::Log_Write_INDI_V(void)
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
 
+struct PACKED log_INDI_VAngle {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float chi_1;
+    float chi_2;
+    float chi_3;
+    float d_chi1;
+    float d_chi2;
+    float gamma_1;
+    float gamma_2;
+    float gamma_3;
+    float d_gamma1;
+    float d_gamma2;
+};
+
+void Plane::Log_Write_INDI_VAngle(void)
+{
+    struct log_INDI_VAngle pkt = {
+            LOG_PACKET_HEADER_INIT(LOG_INDIVA_MSG),
+            time_us             : AP_HAL::micros64(),
+            chi_1               :INDI_controller.get_chi_1(),
+            chi_2               :INDI_controller.get_chi_2(),
+            chi_3               :INDI_controller.get_chi_3(),
+            d_chi1              :INDI_controller.get_d_chi1(),
+            d_chi2              :INDI_controller.get_d_chi1(),
+            gamma_1             :INDI_controller.get_gamma_1(),
+            gamma_2             :INDI_controller.get_gamma_2(),
+            gamma_3             :INDI_controller.get_gamma_3(),
+            d_gamma1            :INDI_controller.get_d_gamma1(),
+            d_gamma2            :INDI_controller.get_d_gamma2(),
+        };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
 
 // type and unit information can be found in
 // libraries/DataFlash/Logstructure.h; search for "log_Units" for
@@ -369,6 +404,7 @@ const struct LogStructure Plane::log_structure[] = {
       //INDI Log
     { LOG_INDIV_MSG, sizeof(log_INDI_V),
       "INDV", "Qffffffffff",  "TimeUS,V,d_V1,d_V2,d_V3,ab1_x,ab1_y,ab1_z,ab2_x,ab2_y,ab2_z", "snooooooooo", "F0000000000" },
+
 };
 
 void Plane::Log_Write_Vehicle_Startup_Messages()

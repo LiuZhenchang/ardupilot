@@ -226,7 +226,7 @@ void MW_INDI::update_flight_path_angle()
 	uint64_t now = AP_HAL::millis();
 
 	////////////////////////////////////////////// gamma_1 /////////////////////////////////////////////////////
-	gamma_1 = asinf(-velocity.z / velocity.length());				//unit: rad
+	gamma_1 = asinf(-velocity.z / velocity.length());				    //unit: rad
 
 	////////////////////////////////////////////// gamma_2 /////////////////////////////////////////////////////
 	Vector2f groundspeed_vector = _ahrs.groundspeed_vector();
@@ -492,6 +492,18 @@ float MW_INDI::get_d_V3() {return d_V3;}
 
 Vector3f MW_INDI::get_a_body_1() {return a_body_1;}
 Vector3f MW_INDI::get_a_body_2() {return a_body_2;}
+
+float MW_INDI::get_chi_1() {return chi_1;}
+float MW_INDI::get_chi_2() {return chi_2;}
+float MW_INDI::get_chi_3() {return chi_3;}
+float MW_INDI::get_d_chi1() {return d_chi1;}
+float MW_INDI::get_d_chi2() {return d_chi2;}
+
+float MW_INDI::get_gamma_1() {return gamma_1;}
+float MW_INDI::get_gamma_2() {return gamma_2;}
+float MW_INDI::get_gamma_3() {return gamma_3;}
+float MW_INDI::get_d_gamma1() {return d_gamma1;}
+float MW_INDI::get_d_gamma2() {return d_gamma2;}
 
 float MW_INDI::get_thrust() {return T_x;}
 float MW_INDI::get_aileron() { return degrees(aileron); }
