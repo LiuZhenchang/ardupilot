@@ -633,13 +633,13 @@ bool Plane::verify_nav_wp(const AP_Mission::Mission_Command& cmd)
     }
 
     /////////////////////////////////////////////// INDI Controller Test///////////////////////////////////////////////////////////
-    //INDI_controller.update_velocity();                                //INDI Test
-    INDI_controller.INDI_state_process_10HZ();                          //INDI Test
     INDI_controller.trajectory_control(current_loc, flex_next_WP_loc);
+
     Log_Write_INDI_V();                                                 //Log write velocity
     Log_Write_INDI_CHI();                                               //Log write kinametic azimuth angle
     Log_Write_INDI_GAM();                                               //Log write flight path angle
     Log_Write_INDI_X0();                                                //Log write location information
+    Log_Write_INDI_X1();                                                //Log write velocity vector  information
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 

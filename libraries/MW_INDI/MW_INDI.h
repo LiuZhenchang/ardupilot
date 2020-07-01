@@ -58,7 +58,8 @@ public:
 	Vector3f get_a_body_1();
 	Vector3f get_a_body_2();
 
-    float get_chi_1();
+
+	float get_chi_1();
     float get_chi_2();
     float get_chi_3();
     float get_d_chi1();
@@ -84,6 +85,8 @@ public:
 
     Vector3f get_x3();
     Vector3f get_x3_ref();
+
+    bool get_trajectory_flag();
 
 	// this supports the MW_INDI_* user settable parameters
 	static const struct AP_Param::GroupInfo var_info[];
@@ -248,4 +251,6 @@ private:
 	float Cl_aileron;	//the derrivation of roll moment coefficient due to aileron
 	float Cm_elavator;	//the derrivation of pitch moment coefficient due to elevator
 	float Cn_rudder;	//the derrivation of yaw moment coefficient due to rudder
+
+	bool trajectory_flag;
 };

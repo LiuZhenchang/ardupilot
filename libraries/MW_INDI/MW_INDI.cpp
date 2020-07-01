@@ -395,6 +395,8 @@ void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Lo
 	mu_ref = atanf((d_chi_des * V * cosf(gamma)) / (d_gamma_des * V + GRAVITY_MSS * cosf(gamma)));
 	beta_ref = 0;
 	x2_ref = Vector3f(mu_ref, alpha_ref, beta_ref);
+
+	trajectory_flag = true;
 }
 
 
@@ -414,12 +416,12 @@ void MW_INDI::attitude_control()
 	//calculate desired flight path vector
 	d_x2_des = K_x2 * (x2_ref - x2);
 
-	a = AP::ins().get_accel();
+	//a = AP::ins().get_accel();
 	float d_chi_a = (1 / (V * cosf(gamma))) * (a.x * sinf(alpha) * sinf(mu) + a.y * cosf(mu) - a.z * cosf(alpha) * sinf(mu)); //unit: rad/s
 	//float d_gamma_a = (1 / V) * (a.x * sinf(alpha) * cosf(mu) - a.y * sinf(mu) - a.z * cosf(alpha) * cosf(mu) - GRAVITY_MSS * cosf(gamma));	//unit: rad/s
 
 	Matrix3f M_rot_kine_1 = Matrix3f(	cosf(alpha) * cosf(beta),			0,				sinf(alpha),
-										sinf(beta),						1,				0,
+										sinf(beta),						    1,				0,
 										sinf(alpha) * cosf(beta),			0,				-cosf(alpha));
 
 	Matrix3f M_rot_kine_2 = Matrix3f(	cosf(alpha) * cosf(beta),											sinf(beta),						sinf(alpha) * cosf(beta),
@@ -475,9 +477,8 @@ void MW_INDI::attitude_control()
 	rudder = constrain_float(rudder, radians(-30), radians(30));
 	if (!(isnan(rudder)) && !(isnan(delta_x4.z)))
 	{ rudder_last = rudder; }
-
-	
 }
+
 
 /************************* Velocity and acceleration Log***************************/
 float MW_INDI::get_V() {return V;}
@@ -522,3 +523,4 @@ float MW_INDI::get_thrust() {return T_x;}
 float MW_INDI::get_aileron() { return degrees(aileron); }
 float MW_INDI::get_elevator() { return degrees(elevator); }
 float MW_INDI::get_rudder() { return degrees(rudder); }
+bool  MW_INDI::get_trajectory_flag() { return trajectory_flag; }

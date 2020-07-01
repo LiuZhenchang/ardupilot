@@ -101,6 +101,7 @@ void Plane::stabilize_roll(float speed_scaler)
     SRV_Channels::set_output_scaled(SRV_Channel::k_aileron, rollController.get_servo_out(nav_roll_cd - ahrs.roll_sensor, 
                                                                                          speed_scaler, 
                                                                                          disable_integrator));
+
 }
 
 /*
@@ -416,12 +417,25 @@ void Plane::stabilize()
         if (g.stick_mixing == STICK_MIXING_FBW && control_mode != STABILIZE) {
             stabilize_stick_mixing_fbw();
         }
-        stabilize_roll(speed_scaler);
-        stabilize_pitch(speed_scaler);
+        stabilize_roll(speed_scaler);                       //LZC Caution
+        stabilize_pitch(speed_scaler);                      //LZC Caution
         if (g.stick_mixing == STICK_MIXING_DIRECT || control_mode == STABILIZE) {
             stabilize_stick_mixing_direct();
         }
-        stabilize_yaw(speed_scaler);
+        stabilize_yaw(speed_scaler);                        //LZC Caution
+
+
+        if(INDI_controller.get_trajectory_flag()){
+            INDI_controller.attitude_control();             //INDI Test
+            if(log_count == 1){
+                Log_Write_INDI_X2();
+            }
+            log_count++;
+            if(log_count > 40){
+                log_count = 0;
+            }
+                                        //INDI Test
+        }
     }
 
     /*

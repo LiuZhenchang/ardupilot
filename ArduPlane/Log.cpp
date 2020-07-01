@@ -409,6 +409,61 @@ void Plane::Log_Write_INDI_X0(void)
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
 
+/********************* Translational Dynamic control Loop Log**********************/
+struct PACKED log_INDI_X1 {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float V;
+    float chi;
+    float gamma;
+    float V_ref;
+    float chi_ref;
+    float gamma_ref;
+};
+
+
+void Plane::Log_Write_INDI_X1(void)
+{
+    struct log_INDI_X1 pkt = {
+            LOG_PACKET_HEADER_INIT(LOG_INDIX1_MSG),
+            time_us             : AP_HAL::micros64(),
+            V                   :INDI_controller.get_x1().x,
+            chi                 :INDI_controller.get_x1().y,
+            gamma               :INDI_controller.get_x1().z,
+            V_ref               :INDI_controller.get_x1_ref().x,
+            chi_ref             :INDI_controller.get_x1_ref().y,
+            gamma_ref           :INDI_controller.get_x1_ref().z,
+        };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
+/********************* Rotational kinematic control Loop Log**********************/
+struct PACKED log_INDI_X2 {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float mu;
+    float alpha;
+    float beta;
+    float mu_ref;
+    float alpha_ref;
+    float beta_ref;
+};
+
+
+void Plane::Log_Write_INDI_X2(void)
+{
+    struct log_INDI_X2 pkt = {
+            LOG_PACKET_HEADER_INIT(LOG_INDIX2_MSG),
+            time_us             : AP_HAL::micros64(),
+            mu                  :INDI_controller.get_x2().x,
+            alpha               :INDI_controller.get_x2().y,
+            beta                :INDI_controller.get_x2().z,
+            mu_ref              :INDI_controller.get_x2_ref().x,
+            alpha_ref           :INDI_controller.get_x2_ref().y,
+            beta_ref            :INDI_controller.get_x2_ref().z,
+        };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
 /////////////////////////////////////////////////////////////////////////////////////
 
 // type and unit information can be found in
@@ -458,6 +513,10 @@ const struct LogStructure Plane::log_structure[] = {
       "INDG", "Qfffff",  "TimeUS,gam_1,gam_2,gam_3,d_gam1,d_gam2", "sdddkk", "F00000" },
     { LOG_INDIX0_MSG, sizeof(log_INDI_X0),
       "INX0", "Qffffff",  "TimeUS,X,Y,Z,X_ref,Y_ref,Z_ref", "smmmmmm", "F000000" },
+    { LOG_INDIX1_MSG, sizeof(log_INDI_X1),
+      "INX1", "Qffffff",  "TimeUS,V,chi,gam,V_ref,chi_ref,gam_ref", "snddndd", "F000000" },
+    { LOG_INDIX2_MSG, sizeof(log_INDI_X2),
+      "INX2", "Qffffff",  "TimeUS,mu,alpha,beta,mu_ref,alpha_ref,beta_ref", "sdddddd", "F000000" },
 };
 
 void Plane::Log_Write_Vehicle_Startup_Messages()
