@@ -293,6 +293,7 @@ void Plane::Log_Write_RC(void)
 
 /////////////////////////////////// INDI Log //////////////////////////////////////
 
+/************************* Velocity and acceleration Log***************************/
 struct PACKED log_INDI_V {
     LOG_PACKET_HEADER;
     uint64_t time_us;
@@ -327,6 +328,7 @@ void Plane::Log_Write_INDI_V(void)
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
 
+/*********************** Kinematic azimuth angle and rate Log************************/
 struct PACKED log_INDI_CHI {
     LOG_PACKET_HEADER;
     uint64_t time_us;
@@ -335,7 +337,6 @@ struct PACKED log_INDI_CHI {
     float chi_3;
     float d_chi1;
     float d_chi2;
-
 };
 
 void Plane::Log_Write_INDI_CHI(void)
@@ -353,6 +354,7 @@ void Plane::Log_Write_INDI_CHI(void)
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
 
+/************************** Flight path angle and rate Log***************************/
 struct PACKED log_INDI_GAM {
     LOG_PACKET_HEADER;
     uint64_t time_us;
@@ -364,6 +366,7 @@ struct PACKED log_INDI_GAM {
 
 };
 
+
 void Plane::Log_Write_INDI_GAM(void)
 {
     struct log_INDI_GAM pkt = {
@@ -374,10 +377,38 @@ void Plane::Log_Write_INDI_GAM(void)
             gamma_3             :INDI_controller.get_gamma_3(),
             d_gamma1            :INDI_controller.get_d_gamma1(),
             d_gamma2            :INDI_controller.get_d_gamma2(),
-
         };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
+
+/********************* Translational kinematic control Loop Log**********************/
+struct PACKED log_INDI_X0 {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float X;
+    float Y;
+    float Z;
+    float X_ref;
+    float Y_ref;
+    float Z_ref;
+};
+
+
+void Plane::Log_Write_INDI_X0(void)
+{
+    struct log_INDI_X0 pkt = {
+            LOG_PACKET_HEADER_INIT(LOG_INDIX0_MSG),
+            time_us             : AP_HAL::micros64(),
+            X                   :INDI_controller.get_x0().x,
+            Y                   :INDI_controller.get_x0().y,
+            Z                   :INDI_controller.get_x0().z,
+            X_ref               :INDI_controller.get_x0_ref().x,
+            Y_ref               :INDI_controller.get_x0_ref().y,
+            Z_ref               :INDI_controller.get_x0_ref().z,
+        };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
 /////////////////////////////////////////////////////////////////////////////////////
 
 // type and unit information can be found in
@@ -425,6 +456,8 @@ const struct LogStructure Plane::log_structure[] = {
       "INDC", "Qfffff",  "TimeUS,chi_1,chi_2,chi_3,d_chi1,d_chi2", "sdddkk", "F00000" },
     { LOG_INDIGAM_MSG, sizeof(log_INDI_GAM),
       "INDG", "Qfffff",  "TimeUS,gam_1,gam_2,gam_3,d_gam1,d_gam2", "sdddkk", "F00000" },
+    { LOG_INDIX0_MSG, sizeof(log_INDI_X0),
+      "INX0", "Qffffff",  "TimeUS,X,Y,Z,X_ref,Y_ref,Z_ref", "smmmmmm", "F000000" },
 };
 
 void Plane::Log_Write_Vehicle_Startup_Messages()

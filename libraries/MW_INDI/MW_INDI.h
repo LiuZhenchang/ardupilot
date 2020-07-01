@@ -70,6 +70,20 @@ public:
     float get_d_gamma1();
     float get_d_gamma2();
 
+    Vector3f get_x0();
+    Vector3f get_x0_ref();
+
+    Vector3f get_x1();
+    Vector3f get_x1_ref();
+
+    Vector3f get_x2();
+    Vector3f get_x2_ref();
+
+    float get_inc_alpha();
+    float get_inc_T();
+
+    Vector3f get_x3();
+    Vector3f get_x3_ref();
 
 	// this supports the MW_INDI_* user settable parameters
 	static const struct AP_Param::GroupInfo var_info[];

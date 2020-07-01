@@ -354,11 +354,6 @@ void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Lo
 	//limit the range of gamma from -45 degree to 45 degree 
 	gamma_ref = -asinf(constrain_float(d_Z_des / V_ref, -0.707, 0.707));
 	
-	/*
-	V_ref = -d_Z_des / (sin(atan((-d_Z_des / d_Y_des) * sin(atan(d_Y_des / d_X_des)))));
-	chi_ref = atan(d_Y_des / d_X_des);
-	gamma_ref = atan((-d_Z_des / d_Y_des) * sin(atan(d_Y_des / d_X_des)));
-	*/
 	x1_ref = Vector3f(V_ref, chi_ref, gamma_ref);
 
 	///////////////////////////////////////////////////////////////////////////////////////////
@@ -484,7 +479,7 @@ void MW_INDI::attitude_control()
 	
 }
 
-
+/************************* Velocity and acceleration Log***************************/
 float MW_INDI::get_V() {return V;}
 float MW_INDI::get_d_V1() {return d_V1;}
 float MW_INDI::get_d_V2() {return d_V2;}
@@ -493,17 +488,35 @@ float MW_INDI::get_d_V3() {return d_V3;}
 Vector3f MW_INDI::get_a_body_1() {return a_body_1;}
 Vector3f MW_INDI::get_a_body_2() {return a_body_2;}
 
-float MW_INDI::get_chi_1() {return chi_1;}
-float MW_INDI::get_chi_2() {return chi_2;}
-float MW_INDI::get_chi_3() {return chi_3;}
-float MW_INDI::get_d_chi1() {return d_chi1;}
-float MW_INDI::get_d_chi2() {return d_chi2;}
+/********************** Kinematic azimuth angle and rate Log************************/
+float MW_INDI::get_chi_1() {return degrees(chi_1);}
+float MW_INDI::get_chi_2() {return degrees(chi_2);}
+float MW_INDI::get_chi_3() {return degrees(chi_3);}
+float MW_INDI::get_d_chi1() {return degrees(d_chi1);}
+float MW_INDI::get_d_chi2() {return degrees(d_chi2);}
 
-float MW_INDI::get_gamma_1() {return gamma_1;}
-float MW_INDI::get_gamma_2() {return gamma_2;}
-float MW_INDI::get_gamma_3() {return gamma_3;}
-float MW_INDI::get_d_gamma1() {return d_gamma1;}
-float MW_INDI::get_d_gamma2() {return d_gamma2;}
+/************************** Flight path angle and rate Log***************************/
+float MW_INDI::get_gamma_1() {return degrees(gamma_1);}
+float MW_INDI::get_gamma_2() {return degrees(gamma_2);}
+float MW_INDI::get_gamma_3() {return degrees(gamma_3);}
+float MW_INDI::get_d_gamma1() {return degrees(d_gamma1);}
+float MW_INDI::get_d_gamma2() {return degrees(d_gamma2);}
+
+/********************* Translational kinematic control Loop Log**********************/
+Vector3f MW_INDI::get_x0() {return x0;}
+Vector3f MW_INDI::get_x0_ref() {return x0_ref;}
+
+Vector3f MW_INDI::get_x1() {return x1;}
+Vector3f MW_INDI::get_x1_ref() {return x1_ref;}
+
+Vector3f MW_INDI::get_x2() {return x2;}
+Vector3f MW_INDI::get_x2_ref() {return x2_ref;}
+
+float MW_INDI::get_inc_alpha() {return degrees(increm_alpha);}
+float MW_INDI::get_inc_T() {return increm_T_x;}
+
+Vector3f MW_INDI::get_x3() {return x3;}
+Vector3f MW_INDI::get_x3_ref() {return x3_ref;}
 
 float MW_INDI::get_thrust() {return T_x;}
 float MW_INDI::get_aileron() { return degrees(aileron); }

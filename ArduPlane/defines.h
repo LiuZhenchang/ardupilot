@@ -152,6 +152,7 @@ enum log_messages {
     LOG_INDIV_MSG,
     LOG_INDICHI_MSG,
     LOG_INDIGAM_MSG,
+    LOG_INDIX0_MSG,
 };
 
 #define MASK_LOG_ATTITUDE_FAST          (1<<0)
