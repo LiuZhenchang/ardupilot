@@ -815,6 +815,8 @@ private:
     void Log_Write_INDI_X0();
     void Log_Write_INDI_X1();
     void Log_Write_INDI_X2();
+    void Log_Write_INDI_X3();
+    void Log_Write_INDI_X4();
     int log_count = 0;
     //////////////////////////////////////////////////////////////////////////////////////////////////
     void load_parameters(void);

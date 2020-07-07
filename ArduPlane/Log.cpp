@@ -428,11 +428,11 @@ void Plane::Log_Write_INDI_X1(void)
             LOG_PACKET_HEADER_INIT(LOG_INDIX1_MSG),
             time_us             : AP_HAL::micros64(),
             V                   :INDI_controller.get_x1().x,
-            chi                 :INDI_controller.get_x1().y,
-            gamma               :INDI_controller.get_x1().z,
+            chi                 :degrees(INDI_controller.get_x1().y),
+            gamma               :degrees(INDI_controller.get_x1().z),
             V_ref               :INDI_controller.get_x1_ref().x,
-            chi_ref             :INDI_controller.get_x1_ref().y,
-            gamma_ref           :INDI_controller.get_x1_ref().z,
+            chi_ref             :degrees(INDI_controller.get_x1_ref().y),
+            gamma_ref           :degrees(INDI_controller.get_x1_ref().z),
         };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -455,12 +455,64 @@ void Plane::Log_Write_INDI_X2(void)
     struct log_INDI_X2 pkt = {
             LOG_PACKET_HEADER_INIT(LOG_INDIX2_MSG),
             time_us             : AP_HAL::micros64(),
-            mu                  :INDI_controller.get_x2().x,
-            alpha               :INDI_controller.get_x2().y,
-            beta                :INDI_controller.get_x2().z,
-            mu_ref              :INDI_controller.get_x2_ref().x,
-            alpha_ref           :INDI_controller.get_x2_ref().y,
-            beta_ref            :INDI_controller.get_x2_ref().z,
+            mu                  :degrees(INDI_controller.get_x2().x),
+            alpha               :degrees(INDI_controller.get_x2().y),
+            beta                :degrees(INDI_controller.get_x2().z),
+            mu_ref              :degrees(INDI_controller.get_x2_ref().x),
+            alpha_ref           :degrees(INDI_controller.get_x2_ref().y),
+            beta_ref            :degrees(INDI_controller.get_x2_ref().z),
+        };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
+/********************* Rotational dynamic control Loop Log**********************/
+struct PACKED log_INDI_X3 {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float p;
+    float q;
+    float r;
+    float p_ref;
+    float q_ref;
+    float r_ref;
+};
+
+
+void Plane::Log_Write_INDI_X3(void)
+{
+    struct log_INDI_X3 pkt = {
+            LOG_PACKET_HEADER_INIT(LOG_INDIX3_MSG),
+            time_us             : AP_HAL::micros64(),
+            p                   :degrees(INDI_controller.get_x3().x),
+            q                   :degrees(INDI_controller.get_x3().y),
+            r                   :degrees(INDI_controller.get_x3().z),
+            p_ref               :degrees(INDI_controller.get_x3_ref().x),
+            q_ref               :degrees(INDI_controller.get_x3_ref().y),
+            r_ref               :degrees(INDI_controller.get_x3_ref().z),
+        };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
+/*************************** Desired control output ****************************/
+struct PACKED log_INDI_X4 {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float aileron;
+    float elevator;
+    float rudder;
+    float thrust;
+};
+
+
+void Plane::Log_Write_INDI_X4(void)
+{
+    struct log_INDI_X4 pkt = {
+            LOG_PACKET_HEADER_INIT(LOG_INDIX4_MSG),
+            time_us             : AP_HAL::micros64(),
+            aileron             :INDI_controller.get_aileron(),
+            elevator            :INDI_controller.get_elevator(),
+            rudder              :INDI_controller.get_rudder(),
+            thrust              :INDI_controller.get_thrust(),
         };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -517,6 +569,10 @@ const struct LogStructure Plane::log_structure[] = {
       "INX1", "Qffffff",  "TimeUS,V,chi,gam,V_ref,chi_ref,gam_ref", "snddndd", "F000000" },
     { LOG_INDIX2_MSG, sizeof(log_INDI_X2),
       "INX2", "Qffffff",  "TimeUS,mu,alpha,beta,mu_ref,alpha_ref,beta_ref", "sdddddd", "F000000" },
+    { LOG_INDIX3_MSG, sizeof(log_INDI_X3),
+      "INX3", "Qffffff",  "TimeUS,p,q,r,p_ref,q_ref,r_ref", "skkkkkk", "F000000" },
+    { LOG_INDIX4_MSG, sizeof(log_INDI_X4),
+      "INX4", "Qffff",  "TimeUS,aileron,elevator,rudder,thrust", "sddd-", "F0000" },
 };
 
 void Plane::Log_Write_Vehicle_Startup_Messages()
