@@ -5,10 +5,12 @@ Liuzhenchang 2020.5.21
 */
 
 #define air_density		1.28	//air density, unit kg/m^3
-#define reference_area	2.241	//reference wing area, unit m^2
-#define reference_c		0.49	//reference chord length, unit m
-#define reference_b		4.1		//reference wing span, unit m
-#define vehicle_mass    32.429	//Vehicle mass, unit kg
+#define reference_area	0.982	//reference wing area, unit m^2
+#define reference_c		0.351	//reference chord length, unit m
+#define reference_b		2.795	//reference wing span, unit m
+#define vehicle_mass    5.897	//Vehicle mass, unit kg
+#define T_max           80      //Maximum Thrust
+#define T_min           0       //Minimum Thrust
 
 #include "MW_INDI.h"
 #include <AP_HAL/AP_HAL.h>
@@ -296,16 +298,34 @@ void MW_INDI::INDI_aerodynamic_coefficient()
 	beta = radians(_ahrs.getSSA());		//unit: rad
 
 	//get aerodynamic coefficient
-	if (degrees(alpha) > 15 || degrees(alpha) < -15) { CL_alpha = -0.01; }
-	else { CL_alpha = 0.07; }
-	CL_alpha = CL_alpha * 180 / M_PI;
+	// choose CL_alpha with alpha section
+	if (alpha > -1.57 && alpha < -0.2) {
+        CL_alpha = 0.454;
+    } else if (alpha >= -0.2 && alpha < 0.23) {
+        CL_alpha = 2.268;
+    } else if (alpha >= 0.23 && alpha < 0.6) {
+        CL_alpha = -0.844;
+    } else if (alpha >= 0.6 && alpha < 1.57) {
+        CL_alpha = -0.331;
+    } else {
+        CL_alpha = 0;
+    }
+	// choose CD_alpha with alpha section
+    if (alpha > -1.57 && alpha < -0.26) {
+        CL_alpha = -0.5;
+    } else if (alpha >= -0.26 && alpha < 0) {
+        CL_alpha = -0.049;
+    } else if (alpha >= 0 && alpha < 0.26) {
+        CL_alpha = 0.049;
+    } else if (alpha >= 0.26 && alpha < 1.57) {
+        CL_alpha = 0.5;
+    } else {
+        CL_alpha = 0;
+    }
 
-	CD_alpha = 0.0012 * degrees(alpha) + 0.0036;
-	CD_alpha = CD_alpha * 180 / M_PI;
-
-	Cl_aileron = -0.0153;
-	Cm_elavator = -0.0247;
-	Cn_rudder = -0.0199; //LZC Caution: the coefficient is not accuracy
+	Cl_aileron = 0.018;
+	Cm_elavator = -0.0691;
+	Cn_rudder = -0.0069;
 }
 
 void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Location& next_WP)
@@ -383,11 +403,11 @@ void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Lo
 	increm_alpha = (m / (a11 * a22 - a21 * a12)) * (a22 * (d_V_des - d_V) + a12 * V * (d_gamma_des - d_gamma));
 	increm_T_x = (-m / (a11 * a22 - a21 * a12)) * (a21 * (d_V_des - d_V) + a11 * V * (d_gamma_des - d_gamma));
 
-	constrain_float((float)increm_alpha, -1, 1);
-	constrain_float((float)increm_T_x, -200, 200);
+	constrain_float((float)increm_alpha, -0.3, 0.3);
+	constrain_float((float)increm_T_x, -20, 20);
 
-	alpha_ref = constrain_float(alpha + increm_alpha,-1,1);
-	T_x = constrain_float(T_x_last + 0.1*increm_T_x, 0, 320);
+	alpha_ref = constrain_float(alpha + 0.1*increm_alpha,-M_PI/4,M_PI/4);
+	T_x = constrain_float(T_x_last + 0.1*increm_T_x, T_min, T_max);
 	T_x_last = T_x;
 
 
@@ -453,9 +473,9 @@ void MW_INDI::attitude_control()
 										0,				reference_c,	0,
 										0,				0,				reference_b);
 
-	Matrix3f M_inertia = Matrix3f(	17.29,		-0.48,		0.14,
-									-0.48,		20.57,		2.02,
-									0.14,		2.02,		35.28);
+	Matrix3f M_inertia = Matrix3f(	2.644,		0,		    0,
+									0,		    2.101,		0,
+									0,		    0   ,		2.590);
 	M_coefficent.invert();
 	M_reference.invert();
 	
