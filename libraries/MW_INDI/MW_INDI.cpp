@@ -50,7 +50,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KV",    4, MW_INDI, _k_V, 1.0f),
+	AP_GROUPINFO("GAIN_KV",    4, MW_INDI, _k_V, 2.0f),
 
 	// @Param: GAIN_KCHI
 	// @DisplayName: Desired heading angular velocity Proportional Gain
@@ -66,7 +66,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KGAM",    6, MW_INDI, _k_gamma, 1.0f),
+	AP_GROUPINFO("GAIN_KGAM",    6, MW_INDI, _k_gamma, 2.0f),
 
 	// @Param: GAIN_KMU
 	// @DisplayName: Desired bank angular velocity Proportional Gain
@@ -74,7 +74,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KMU",    7, MW_INDI, _k_mu, 1.5f),
+	AP_GROUPINFO("GAIN_KMU",    7, MW_INDI, _k_mu, 2.0f),
 
 	// @Param: GAIN_KALP
 	// @DisplayName: Desired attack angular velocity Proportional Gain
@@ -82,7 +82,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KALP",    8, MW_INDI, _k_alpha, 5.5f),
+	AP_GROUPINFO("GAIN_KALP",    8, MW_INDI, _k_alpha, 3.5f),
 
 	// @Param: GAIN_KBET
 	// @DisplayName: Desired sideslip angular velocity Proportional Gain
@@ -98,7 +98,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KP",    10, MW_INDI, _k_p, 3.5f),
+	AP_GROUPINFO("GAIN_KP",    10, MW_INDI, _k_p, 6.0f),
 
 	// @Param: GAIN_KQ
 	// @DisplayName: Desired pitch angular acceleration Proportional Gain
@@ -106,7 +106,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KQ",    11, MW_INDI, _k_q, 4.0f),
+	AP_GROUPINFO("GAIN_KQ",    11, MW_INDI, _k_q, 6.0f),
 
 	// @Param: GAIN_KR
 	// @DisplayName: Desired yaw angular acceleration Proportional Gain
@@ -114,7 +114,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KR",    12, MW_INDI, _k_r, 2.0f),
+	AP_GROUPINFO("GAIN_KR",    12, MW_INDI, _k_r, 4.0f),
 
 
 	AP_GROUPEND
@@ -403,16 +403,22 @@ void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Lo
 	increm_alpha = (m / (a11 * a22 - a21 * a12)) * (a22 * (d_V_des - d_V) + a12 * V * (d_gamma_des - d_gamma));
 	increm_T_x = (-m / (a11 * a22 - a21 * a12)) * (a21 * (d_V_des - d_V) + a11 * V * (d_gamma_des - d_gamma));
 
-	constrain_float((float)increm_alpha, -0.3, 0.3);
-	constrain_float((float)increm_T_x, -20, 20);
+    increm_alpha = constrain_float((float) increm_alpha, -0.3, 0.3);
+    increm_T_x = constrain_float((float) increm_T_x, -20, 20);
 
-	alpha_ref = constrain_float(alpha + 0.1*increm_alpha,-M_PI/4,M_PI/4);
+	alpha_ref = constrain_float(alpha + 0.01*increm_alpha,-M_PI/4,M_PI/4);
 	T_x = constrain_float(T_x_last + 0.1*increm_T_x, T_min, T_max);
 	T_x_last = T_x;
 
+    watch1=float(a11);
+    watch2=float(a21);
+    watch3=float(a11 * a22 - a21 * a12);
+    watch4=float(d_V_des - d_V);
+    watch5=float(d_gamma_des - d_gamma);
+    watch6=float(increm_alpha);
 
 	//calculate reference bank angle
-	mu_ref = atanf((d_chi_des * V * cosf(gamma)) / (d_gamma_des * V + GRAVITY_MSS * cosf(gamma)));
+	mu_ref = atanf((d_chi_des * V * cosf(gamma)) / (d_gamma * V + GRAVITY_MSS * cosf(gamma))); //LZC Caution
 	beta_ref = 0;
 	x2_ref = Vector3f(mu_ref, alpha_ref, beta_ref);
 
@@ -544,3 +550,17 @@ float MW_INDI::get_aileron() { return degrees(aileron); }
 float MW_INDI::get_elevator() { return degrees(elevator); }
 float MW_INDI::get_rudder() { return degrees(rudder); }
 bool  MW_INDI::get_trajectory_flag() { return trajectory_flag; }
+
+/****************************** control output signal *******************************/
+int32_t MW_INDI::get_aileron_out(){return int32_t(degrees(aileron)*100);}
+int32_t MW_INDI::get_elevator_out(){return int32_t(degrees(elevator)*100);}
+int16_t MW_INDI::get_rudder_out(){return int16_t(degrees(rudder)*100);}
+int32_t MW_INDI::get_throttle_demand(){return int32_t((T_x/T_max)*100);}
+
+/****************************** INDI watched variables ******************************/
+float MW_INDI::get_watch1() {return watch1;}
+float MW_INDI::get_watch2() {return watch2;}
+float MW_INDI::get_watch3() {return watch3;}
+float MW_INDI::get_watch4() {return watch4;}
+float MW_INDI::get_watch5() {return watch5;}
+float MW_INDI::get_watch6() {return watch6;}

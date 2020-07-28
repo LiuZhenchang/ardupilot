@@ -509,10 +509,38 @@ void Plane::Log_Write_INDI_X4(void)
     struct log_INDI_X4 pkt = {
             LOG_PACKET_HEADER_INIT(LOG_INDIX4_MSG),
             time_us             : AP_HAL::micros64(),
-            aileron             :INDI_controller.get_aileron(),
-            elevator            :INDI_controller.get_elevator(),
-            rudder              :INDI_controller.get_rudder(),
+            aileron             :INDI_controller.get_aileron()*100,
+            elevator            :INDI_controller.get_elevator()*100,
+            rudder              :INDI_controller.get_rudder()*100,
             thrust              :INDI_controller.get_thrust(),
+        };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
+/*************************** INDI turning watch variables ****************************/
+struct PACKED log_INDI_WATCH {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    float watch1;
+    float watch2;
+    float watch3;
+    float watch4;
+    float watch5;
+    float watch6;
+};
+
+
+void Plane::Log_Write_INDI_WATCH(void)
+{
+    struct log_INDI_WATCH pkt = {
+            LOG_PACKET_HEADER_INIT(LOG_INDIWTH_MSG),
+            time_us             : AP_HAL::micros64(),
+            watch1             :INDI_controller.get_watch1(),
+            watch2             :INDI_controller.get_watch2(),
+            watch3             :INDI_controller.get_watch3(),
+            watch4             :INDI_controller.get_watch4(),
+            watch5             :INDI_controller.get_watch5(),
+            watch6             :INDI_controller.get_watch6(),
         };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -573,6 +601,8 @@ const struct LogStructure Plane::log_structure[] = {
       "INX3", "Qffffff",  "TimeUS,p,q,r,p_ref,q_ref,r_ref", "skkkkkk", "F000000" },
     { LOG_INDIX4_MSG, sizeof(log_INDI_X4),
       "INX4", "Qffff",  "TimeUS,aileron,elevator,rudder,thrust", "sddd-", "F0000" },
+    { LOG_INDIWTH_MSG, sizeof(log_INDI_WATCH),
+      "INWH", "Qffffff",  "TimeUS,watch1,watch2,watch3,watch4,watch5,watch6", "s------", "F000000" },
 };
 
 void Plane::Log_Write_Vehicle_Startup_Messages()

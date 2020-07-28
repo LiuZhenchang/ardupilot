@@ -98,10 +98,11 @@ void Plane::stabilize_roll(float speed_scaler)
     if (control_mode == STABILIZE && channel_roll->get_control_in() != 0) {
         disable_integrator = true;
     }
-    SRV_Channels::set_output_scaled(SRV_Channel::k_aileron, rollController.get_servo_out(nav_roll_cd - ahrs.roll_sensor, 
-                                                                                         speed_scaler, 
+    SRV_Channels::set_output_scaled(SRV_Channel::k_aileron, rollController.get_servo_out(nav_roll_cd - ahrs.roll_sensor,
+                                                                                         speed_scaler,
                                                                                          disable_integrator));
 
+    SRV_Channels::set_output_scaled(SRV_Channel::k_aileron, INDI_controller.get_aileron_out()); //LZC INDI
 }
 
 /*
@@ -123,9 +124,11 @@ void Plane::stabilize_pitch(float speed_scaler)
     if (control_mode == STABILIZE && channel_pitch->get_control_in() != 0) {
         disable_integrator = true;
     }
-    SRV_Channels::set_output_scaled(SRV_Channel::k_elevator, pitchController.get_servo_out(demanded_pitch - ahrs.pitch_sensor, 
-                                                                                           speed_scaler, 
-                                                                                           disable_integrator));
+    SRV_Channels::set_output_scaled(SRV_Channel::k_elevator, pitchController.get_servo_out(demanded_pitch - ahrs.pitch_sensor,
+                                                                                          speed_scaler,
+                                                                                          disable_integrator));
+
+    SRV_Channels::set_output_scaled(SRV_Channel::k_elevator, INDI_controller.get_elevator_out()); //LZC INDI
 }
 
 /*
@@ -432,9 +435,10 @@ void Plane::stabilize()
                 Log_Write_INDI_X2();
                 Log_Write_INDI_X3();
                 Log_Write_INDI_X4();
+                Log_Write_INDI_WATCH();
             }
             log_count++;
-            if(log_count > 40) { log_count = 0;}            //INDI Test
+            if(log_count > 1) { log_count = 0;}            //INDI Test
         }
         /*******************************************************************************/
     }
@@ -471,7 +475,8 @@ void Plane::calc_throttle()
         return;
     }
 
-    int32_t commanded_throttle = SpdHgt_Controller->get_throttle_demand();
+    //int32_t commanded_throttle = SpdHgt_Controller->get_throttle_demand();
+    int32_t commanded_throttle = INDI_controller.get_throttle_demand(); //LZC INDI
 
     // Received an external msg that guides throttle in the last 3 seconds?
     if ((control_mode == GUIDED || control_mode == AVOID_ADSB) &&
@@ -506,6 +511,7 @@ void Plane::calc_nav_yaw_coordinated(float speed_scaler)
         commanded_rudder = plane.guided_state.forced_rpy_cd.z;
     } else {
         commanded_rudder = yawController.get_servo_out(speed_scaler, disable_integrator);
+        commanded_rudder = INDI_controller.get_rudder_out(); //LZC INDI
 
         // add in rudder mixing from roll
         commanded_rudder += SRV_Channels::get_output_scaled(SRV_Channel::k_aileron) * g.kff_rudder_mix;

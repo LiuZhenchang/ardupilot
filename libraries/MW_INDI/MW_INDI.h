@@ -88,6 +88,19 @@ public:
 
     bool get_trajectory_flag();
 
+    int32_t get_aileron_out();                      //get aileron out put signal range from -4500 to 45000
+    int32_t get_elevator_out();                     //get elevator out put signal range from -4500 to 45000
+    int16_t get_rudder_out();                       //get rudder out put signal range from -4500 to 45000
+    int32_t get_throttle_demand();                  //get throttle out put signal range from 0 to 100
+
+    //watched variables used for turning
+    float get_watch1();
+    float get_watch2();
+    float get_watch3();
+    float get_watch4();
+    float get_watch5();
+    float get_watch6();
+
 	// this supports the MW_INDI_* user settable parameters
 	static const struct AP_Param::GroupInfo var_info[];
 
@@ -253,4 +266,12 @@ private:
 	float Cn_rudder;	//the derrivation of yaw moment coefficient due to rudder
 
 	bool trajectory_flag;
+
+	//Temporary watched variables
+	float watch1;
+	float watch2;
+	float watch3;
+	float watch4;
+	float watch5;
+	float watch6;
 };
