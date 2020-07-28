@@ -42,7 +42,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KZ",    3, MW_INDI, _k_z, 0.5f),
+	AP_GROUPINFO("GAIN_KZ",    3, MW_INDI, _k_z, 0.1f),
 
 	// @Param: GAIN_KV
 	// @DisplayName: Desired acceleration scaler Proportional Gain
@@ -66,7 +66,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KGAM",    6, MW_INDI, _k_gamma, 2.0f),
+	AP_GROUPINFO("GAIN_KGAM",    6, MW_INDI, _k_gamma, 1.0f),
 
 	// @Param: GAIN_KMU
 	// @DisplayName: Desired bank angular velocity Proportional Gain
@@ -82,7 +82,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KALP",    8, MW_INDI, _k_alpha, 3.5f),
+	AP_GROUPINFO("GAIN_KALP",    8, MW_INDI, _k_alpha, 10.0f),
 
 	// @Param: GAIN_KBET
 	// @DisplayName: Desired sideslip angular velocity Proportional Gain
@@ -90,7 +90,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KBET",    9, MW_INDI, _k_beta, 2.5f),
+	AP_GROUPINFO("GAIN_KBET",    9, MW_INDI, _k_beta, 1.0f),
 
 	// @Param: GAIN_KP
 	// @DisplayName: Desired roll angular acceleration Proportional Gain
@@ -106,7 +106,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KQ",    11, MW_INDI, _k_q, 6.0f),
+	AP_GROUPINFO("GAIN_KQ",    11, MW_INDI, _k_q, 8.0f),
 
 	// @Param: GAIN_KR
 	// @DisplayName: Desired yaw angular acceleration Proportional Gain
@@ -114,7 +114,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KR",    12, MW_INDI, _k_r, 4.0f),
+	AP_GROUPINFO("GAIN_KR",    12, MW_INDI, _k_r, 1.0f),
 
 
 	AP_GROUPEND
@@ -312,19 +312,19 @@ void MW_INDI::INDI_aerodynamic_coefficient()
     }
 	// choose CD_alpha with alpha section
     if (alpha > -1.57 && alpha < -0.26) {
-        CL_alpha = -0.5;
+        CD_alpha = -0.5;
     } else if (alpha >= -0.26 && alpha < 0) {
-        CL_alpha = -0.049;
+        CD_alpha = -0.049;
     } else if (alpha >= 0 && alpha < 0.26) {
-        CL_alpha = 0.049;
+        CD_alpha = 0.049;
     } else if (alpha >= 0.26 && alpha < 1.57) {
-        CL_alpha = 0.5;
+        CD_alpha = 0.5;
     } else {
-        CL_alpha = 0;
+        CD_alpha = 0;
     }
 
 	Cl_aileron = 0.018;
-	Cm_elavator = -0.0691;
+	Cm_elavator = 0.0691; //LZC Caution: Multiply -1
 	Cn_rudder = -0.0069;
 }
 
@@ -403,18 +403,17 @@ void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Lo
 	increm_alpha = (m / (a11 * a22 - a21 * a12)) * (a22 * (d_V_des - d_V) + a12 * V * (d_gamma_des - d_gamma));
 	increm_T_x = (-m / (a11 * a22 - a21 * a12)) * (a21 * (d_V_des - d_V) + a11 * V * (d_gamma_des - d_gamma));
 
-    increm_alpha = constrain_float((float) increm_alpha, -0.3, 0.3);
+    increm_alpha = constrain_float((float) increm_alpha, -10, 10);
     increm_T_x = constrain_float((float) increm_T_x, -20, 20);
 
-	alpha_ref = constrain_float(alpha + 0.01*increm_alpha,-M_PI/4,M_PI/4);
+	alpha_ref = constrain_float(alpha + 0.2*increm_alpha,-M_PI/4,M_PI/4);
 	T_x = constrain_float(T_x_last + 0.1*increm_T_x, T_min, T_max);
 	T_x_last = T_x;
 
-    watch1=float(a11);
-    watch2=float(a21);
+	watch2=float(a11);
     watch3=float(a11 * a22 - a21 * a12);
-    watch4=float(d_V_des - d_V);
-    watch5=float(d_gamma_des - d_gamma);
+    watch4=float(a21);
+    watch5=float(a22);
     watch6=float(increm_alpha);
 
 	//calculate reference bank angle
@@ -472,7 +471,7 @@ void MW_INDI::attitude_control()
 
 
 	Matrix3f M_coefficent = Matrix3f(	Cl_aileron,		0,				0,
-										0,				Cm_elavator*20,	0,
+										0,				Cm_elavator,	0,
 										0,				0,				Cn_rudder*20);
 
 	Matrix3f M_reference = Matrix3f(	reference_b,	0,				0,
@@ -488,6 +487,8 @@ void MW_INDI::attitude_control()
 	Vector3f delta_x4;
 	delta_x4 = M_coefficent* M_reference * M_inertia * (d_x3_des- d_x3)* (0.01*1 / (0.5 * air_density * sq(V) * reference_area));
 	//delta_x4 = M_coefficent * M_reference * M_inertia * (d_x3_des) * (1 / (0.5 * air_density * sq(V) * reference_area));
+
+    watch1=float(delta_x4.y);
 
 	aileron = aileron_last + constrain_float(delta_x4.x, -0.1, 0.1); //LZC: Caution: the time factor is determined by the  control frequency
 	aileron = constrain_float(aileron, radians(-30), radians(30));
