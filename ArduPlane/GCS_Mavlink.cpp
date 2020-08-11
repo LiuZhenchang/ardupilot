@@ -26,6 +26,7 @@ MAV_MODE GCS_MAVLINK_Plane::base_mode() const
         _base_mode = MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;
         break;
     case STABILIZE:
+    case STABILIZE_INDI:
     case FLY_BY_WIRE_A:
     case AUTOTUNE:
     case FLY_BY_WIRE_B:
@@ -37,6 +38,7 @@ MAV_MODE GCS_MAVLINK_Plane::base_mode() const
         _base_mode = MAV_MODE_FLAG_STABILIZE_ENABLED;
         break;
     case AUTO:
+    case AUTO_INDI:
     case RTL:
     case LOITER:
     case AVOID_ADSB:
@@ -1641,6 +1643,8 @@ bool GCS_MAVLINK_Plane::set_mode(const uint8_t mode)
     case QLOITER:
     case QLAND:
     case QRTL:
+    case AUTO_INDI:
+    case STABILIZE_INDI:
         plane.set_mode((enum FlightMode)mode, MODE_REASON_GCS_COMMAND);
         return true;
     }

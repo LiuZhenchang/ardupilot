@@ -360,6 +360,10 @@ void Plane::set_mode(enum FlightMode mode, mode_reason_t reason)
         auto_navigation_mode = false;
         break;
 
+    case STABILIZE_INDI:
+        // Nothing to do
+        break;
+
     case AUTOTUNE:
         throttle_allows_nudging = false;
         auto_throttle_mode = false;
@@ -408,6 +412,7 @@ void Plane::set_mode(enum FlightMode mode, mode_reason_t reason)
         break;
 
     case AUTO:
+    case AUTO_INDI:
         throttle_allows_nudging = true;
         auto_throttle_mode = true;
         auto_navigation_mode = true;

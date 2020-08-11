@@ -506,7 +506,9 @@ void Plane::update_flight_mode(void)
     case AUTO:
         handle_auto_mode();
         break;
-
+    case AUTO_INDI:
+        //nothing to do
+        break;
     case AVOID_ADSB:
     case GUIDED:
         if (auto_state.vtol_loiter && quadplane.available()) {
@@ -635,6 +637,7 @@ void Plane::update_flight_mode(void)
         break;
         
     case STABILIZE:
+    case STABILIZE_INDI:
         nav_roll_cd        = 0;
         nav_pitch_cd       = 0;
         // throttle is passthrough
@@ -703,6 +706,7 @@ void Plane::update_navigation()
     
     switch(control_mode) {
     case AUTO:
+    case AUTO_INDI:
         if (ahrs.home_is_set()) {
             mission.update();
         }
@@ -766,6 +770,7 @@ void Plane::update_navigation()
 
     case MANUAL:
     case STABILIZE:
+    case STABILIZE_INDI:
     case TRAINING:
     case INITIALISING:
     case ACRO:

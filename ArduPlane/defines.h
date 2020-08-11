@@ -65,7 +65,9 @@ enum FlightMode {
     QHOVER        = 18,
     QLOITER       = 19,
     QLAND         = 20,
-    QRTL          = 21
+    QRTL          = 21,
+    AUTO_INDI     = 50,     //LZC INDI
+    STABILIZE_INDI= 51      //LZC INDI
 };
 
 enum mode_reason_t {
