@@ -348,7 +348,7 @@ void Plane::Log_Write_INDI_CHI(void)
             chi_2               :INDI_controller.get_chi_2(),
             chi_3               :INDI_controller.get_chi_3(),
             d_chi1              :INDI_controller.get_d_chi1(),
-            d_chi2              :INDI_controller.get_d_chi1(),
+            d_chi2              :INDI_controller.get_d_chi2(),
 
         };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));

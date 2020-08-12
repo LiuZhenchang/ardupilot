@@ -514,7 +514,7 @@ void Plane::calc_nav_yaw_coordinated(float speed_scaler)
         commanded_rudder = INDI_controller.get_rudder_out(); //LZC INDI
 
         // add in rudder mixing from roll
-        commanded_rudder += SRV_Channels::get_output_scaled(SRV_Channel::k_aileron) * g.kff_rudder_mix;
+        //commanded_rudder += SRV_Channels::get_output_scaled(SRV_Channel::k_aileron) * g.kff_rudder_mix;
         commanded_rudder += rudder_input;
     }
 

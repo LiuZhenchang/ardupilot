@@ -26,7 +26,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KX",    1, MW_INDI, _k_x, 0.5f),
+	AP_GROUPINFO("GAIN_KX",    1, MW_INDI, _k_x, 0.1f),
 
 	// @Param: GAIN_KY
 	// @DisplayName: Desired y velocity Proportional Gain
@@ -34,7 +34,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KY",    2, MW_INDI, _k_y, 0.5f),
+	AP_GROUPINFO("GAIN_KY",    2, MW_INDI, _k_y, 0.1f),
 
 	// @Param: GAIN_KZ
 	// @DisplayName: Desired z velocity Proportional Gain
@@ -66,7 +66,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KGAM",    6, MW_INDI, _k_gamma, 1.0f),
+	AP_GROUPINFO("GAIN_KGAM",    6, MW_INDI, _k_gamma, 2.0f),
 
 	// @Param: GAIN_KMU
 	// @DisplayName: Desired bank angular velocity Proportional Gain
@@ -90,7 +90,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KBET",    9, MW_INDI, _k_beta, 1.0f),
+	AP_GROUPINFO("GAIN_KBET",    9, MW_INDI, _k_beta, 2.0f),
 
 	// @Param: GAIN_KP
 	// @DisplayName: Desired roll angular acceleration Proportional Gain
@@ -106,7 +106,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KQ",    11, MW_INDI, _k_q, 8.0f),
+	AP_GROUPINFO("GAIN_KQ",    11, MW_INDI, _k_q, 6.0f),
 
 	// @Param: GAIN_KR
 	// @DisplayName: Desired yaw angular acceleration Proportional Gain
@@ -114,7 +114,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KR",    12, MW_INDI, _k_r, 1.0f),
+	AP_GROUPINFO("GAIN_KR",    12, MW_INDI, _k_r, 3.0f),
 
 
 	AP_GROUPEND
@@ -325,7 +325,7 @@ void MW_INDI::INDI_aerodynamic_coefficient()
 
 	Cl_aileron = 0.018;
 	Cm_elavator = 0.0691; //LZC Caution: Multiply -1
-	Cn_rudder = -0.0069;
+	Cn_rudder = 0.0069; //LZC Caution: Multiply -1
 }
 
 void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Location& next_WP)
@@ -376,9 +376,9 @@ void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Lo
 	
 	x1_ref = Vector3f(V_ref, chi_ref, gamma_ref);
 
-	///////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////Translational dynamic control lopp in INDI/////////////////////////
-	///////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////
 	m = vehicle_mass; //mass unit kg
 	x1 = Vector3f(V, chi, gamma);
 	
@@ -412,16 +412,24 @@ void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Lo
 
 	watch2=float(a11);
     watch3=float(a11 * a22 - a21 * a12);
-    watch4=float(a21);
-    watch5=float(a22);
-    watch6=float(increm_alpha);
+    watch4 = float(a21);
+    watch5 = float(a22);
+    watch6 = float(increm_alpha);
 
-	//calculate reference bank angle
-	mu_ref = atanf((d_chi_des * V * cosf(gamma)) / (d_gamma * V + GRAVITY_MSS * cosf(gamma))); //LZC Caution
-	beta_ref = 0;
-	x2_ref = Vector3f(mu_ref, alpha_ref, beta_ref);
+    //calculate reference bank angle
+    mu_ref = atanf(
+            (d_chi_des * V * cosf(gamma))
+                    / (d_gamma * V + GRAVITY_MSS * cosf(gamma))); //LZC Caution
+    // Using waypoint fault tolerant guidance method to limit the range of mu_ref
+    if (location_3d_diff_NED(_current_loc, next_WP) * velocity > 0)
+        mu_ref = constrain_float(mu_ref, -1, 1);
+    else
+        mu_ref = constrain_float(mu_ref, -0.6, 0.6);
 
-	trajectory_flag = true;
+    beta_ref = 0;
+    x2_ref = Vector3f(mu_ref, alpha_ref, beta_ref);
+
+    trajectory_flag = true;
 }
 
 
@@ -441,9 +449,7 @@ void MW_INDI::attitude_control()
 	//calculate desired flight path vector
 	d_x2_des = K_x2 * (x2_ref - x2);
 
-	//a = AP::ins().get_accel();
-	float d_chi_a = (1 / (V * cosf(gamma))) * (a.x * sinf(alpha) * sinf(mu) + a.y * cosf(mu) - a.z * cosf(alpha) * sinf(mu)); //unit: rad/s
-	//float d_gamma_a = (1 / V) * (a.x * sinf(alpha) * cosf(mu) - a.y * sinf(mu) - a.z * cosf(alpha) * cosf(mu) - GRAVITY_MSS * cosf(gamma));	//unit: rad/s
+    watch1 = d_chi2 * 180 / M_PI;
 
 	Matrix3f M_rot_kine_1 = Matrix3f(	cosf(alpha) * cosf(beta),			0,				sinf(alpha),
 										sinf(beta),						    1,				0,
@@ -453,7 +459,7 @@ void MW_INDI::attitude_control()
 										-cosf(alpha) * sinf(beta) * cosf(mu) + sinf(alpha) * sinf(mu),		cosf(beta) * cosf(mu),			-sinf(alpha) * sinf(beta) * cosf(mu) - cosf(alpha) * sinf(mu),
 										-cosf(alpha) * sinf(beta) * sinf(mu) - sinf(alpha) * cosf(mu),		cosf(beta) * sinf(mu),			-sinf(alpha) * sinf(beta) * sinf(mu) + cosf(alpha) * cosf(mu));
 
-	Vector3f V_rot_kine_1 = Vector3f(-d_chi_a * sinf(gamma), d_gamma, d_chi_a * cosf(gamma));
+	Vector3f V_rot_kine_1 = Vector3f(-d_chi2 * sinf(gamma), d_gamma2, d_chi2 * cosf(gamma));
 
 	x3_ref = M_rot_kine_1 * d_x2_des + M_rot_kine_2.transposed() * V_rot_kine_1;
 
@@ -472,7 +478,7 @@ void MW_INDI::attitude_control()
 
 	Matrix3f M_coefficent = Matrix3f(	Cl_aileron,		0,				0,
 										0,				Cm_elavator,	0,
-										0,				0,				Cn_rudder*20);
+										0,				0,				Cn_rudder);
 
 	Matrix3f M_reference = Matrix3f(	reference_b,	0,				0,
 										0,				reference_c,	0,
@@ -485,10 +491,7 @@ void MW_INDI::attitude_control()
 	M_reference.invert();
 	
 	Vector3f delta_x4;
-	delta_x4 = M_coefficent* M_reference * M_inertia * (d_x3_des- d_x3)* (0.01*1 / (0.5 * air_density * sq(V) * reference_area));
-	//delta_x4 = M_coefficent * M_reference * M_inertia * (d_x3_des) * (1 / (0.5 * air_density * sq(V) * reference_area));
-
-    watch1=float(delta_x4.y);
+	delta_x4 = M_coefficent* M_reference * M_inertia * (d_x3_des- d_x3)* (0.015 / (0.5 * air_density * sq(V) * reference_area));
 
 	aileron = aileron_last + constrain_float(delta_x4.x, -0.1, 0.1); //LZC: Caution: the time factor is determined by the  control frequency
 	aileron = constrain_float(aileron, radians(-30), radians(30));
@@ -501,7 +504,7 @@ void MW_INDI::attitude_control()
 	{ elevator_last = elevator; }
 	
 	rudder = rudder_last + constrain_float(delta_x4.z, -0.1, 0.1);
-	rudder = constrain_float(rudder, radians(-30), radians(30));
+	rudder = 0*constrain_float(rudder, radians(-30), radians(30));
 	if (!(isnan(rudder)) && !(isnan(delta_x4.z)))
 	{ rudder_last = rudder; }
 }
