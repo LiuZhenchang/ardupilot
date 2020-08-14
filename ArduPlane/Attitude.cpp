@@ -428,17 +428,22 @@ void Plane::stabilize()
         stabilize_yaw(speed_scaler);                        //LZC Caution
 
         /****************************** INDI Controller ********************************/
-        if(INDI_controller.get_trajectory_flag()){
-            INDI_controller.attitude_control();             //INDI Test
+        if (!INDI_controller.get_trajectory_flag()) {
+            INDI_controller.INDI_state_process_10HZ();
+            INDI_controller.set_x2_ref(nav_roll_cd, nav_pitch_cd);
+        }
 
-            if(log_count == 1){
-                Log_Write_INDI_X2();
-                Log_Write_INDI_X3();
-                Log_Write_INDI_X4();
-                Log_Write_INDI_WATCH();
-            }
-            log_count++;
-            if(log_count > 1) { log_count = 0;}            //INDI Test
+        INDI_controller.attitude_control();                 //INDI Test
+
+        if (log_count == 1) {
+            Log_Write_INDI_X2();
+            Log_Write_INDI_X3();
+            Log_Write_INDI_X4();
+            Log_Write_INDI_WATCH();
+        }
+        log_count++;
+        if (log_count > 1) {
+            log_count = 0;
         }
         /*******************************************************************************/
     }

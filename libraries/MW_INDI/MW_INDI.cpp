@@ -116,6 +116,13 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @User: Standard
 	AP_GROUPINFO("GAIN_KR",    12, MW_INDI, _k_r, 3.0f),
 
+    // @Param: GAIN_KSTAB
+    // @DisplayName: Stabilize mode test Proportional Gain
+    // @Description: This is the gain to calculate reference alpha for stabilize mode test
+    // @Increment: unknown
+    // @Range: unknown
+    // @User: Standard
+    AP_GROUPINFO("GAIN_KSTAB",    13, MW_INDI, _k_stab, 0.1f),
 
 	AP_GROUPEND
 };
@@ -324,8 +331,10 @@ void MW_INDI::INDI_aerodynamic_coefficient()
     }
 
 	Cl_aileron = 0.018;
-	Cm_elavator = 0.0691; //LZC Caution: Multiply -1
-	Cn_rudder = 0.0069; //LZC Caution: Multiply -1
+    Cl_rudder = 0;
+    Cm_elavator = 0.0691;   //LZC Caution: Multiply -1
+    Cn_rudder = 0.0069;     //LZC Caution: Multiply -1
+    Cn_aileron = 0;         //0.00414
 }
 
 void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Location& next_WP)
@@ -420,11 +429,26 @@ void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Lo
     mu_ref = atanf(
             (d_chi_des * V * cosf(gamma))
                     / (d_gamma * V + GRAVITY_MSS * cosf(gamma))); //LZC Caution
-    // Using waypoint fault tolerant guidance method to limit the range of mu_ref
+    // Using way point fault tolerant guidance method to limit the range of mu_ref
+    float k_m_a = 0; //The correction of mu_ref with alpha
+    float k_temp = 0;
+    if (fabs(mu_ref) > 0.3) {
+        if (alpha > 0) {
+            k_m_a = 1;
+            k_temp = fabs(mu_ref) / fabs(alpha);
+            if (k_m_a > 0.8 * k_temp)
+                k_m_a = 0.5 * k_temp;
+        } else {
+            k_m_a = 0.8;
+            k_temp = fabs(mu_ref) / fabs(alpha);
+            if (k_m_a > 0.5 * k_temp)
+                k_m_a = 0.3 * k_temp;
+        }
+    }
     if (location_3d_diff_NED(_current_loc, next_WP) * velocity > 0)
-        mu_ref = constrain_float(mu_ref, -1, 1);
+        mu_ref = constrain_float(mu_ref-k_m_a*alpha, -0.8, 0.8);
     else
-        mu_ref = constrain_float(mu_ref, -0.6, 0.6);
+        mu_ref = constrain_float(mu_ref-k_m_a*alpha, -0.4, 0.4);
 
     beta_ref = 0;
     x2_ref = Vector3f(mu_ref, alpha_ref, beta_ref);
@@ -476,9 +500,9 @@ void MW_INDI::attitude_control()
 	d_x3_des = K_x3 * (x3_ref - x3);
 
 
-	Matrix3f M_coefficent = Matrix3f(	Cl_aileron,		0,				0,
+	Matrix3f M_coefficent = Matrix3f(	Cl_aileron,		0,				Cl_rudder,
 										0,				Cm_elavator,	0,
-										0,				0,				Cn_rudder);
+										Cn_aileron,		0,				Cn_rudder);
 
 	Matrix3f M_reference = Matrix3f(	reference_b,	0,				0,
 										0,				reference_c,	0,
@@ -494,19 +518,22 @@ void MW_INDI::attitude_control()
 	delta_x4 = M_coefficent* M_reference * M_inertia * (d_x3_des- d_x3)* (0.015 / (0.5 * air_density * sq(V) * reference_area));
 
 	aileron = aileron_last + constrain_float(delta_x4.x, -0.1, 0.1); //LZC: Caution: the time factor is determined by the  control frequency
-	aileron = constrain_float(aileron, radians(-30), radians(30));
-	if (!(isnan(aileron))&& !(isnan(delta_x4.x)))
-	{ aileron_last = aileron; }
+    aileron = constrain_float(aileron, radians(-30), radians(30));
+    if (!(isnan(aileron)) && !(isnan(delta_x4.x))) {
+        aileron_last = aileron;
+    }
 
-	elevator = elevator_last + constrain_float(delta_x4.y, -0.1, 0.1);
-	elevator = constrain_float(elevator, radians(-30), radians(30));
-	if (!(isnan(elevator)) && !(isnan(delta_x4.y)))
-	{ elevator_last = elevator; }
+    elevator = elevator_last + constrain_float(delta_x4.y, -0.1, 0.1);
+    elevator = constrain_float(elevator, radians(-30), radians(30));
+    if (!(isnan(elevator)) && !(isnan(delta_x4.y))) {
+        elevator_last = elevator;
+    }
 	
 	rudder = rudder_last + constrain_float(delta_x4.z, -0.1, 0.1);
-	rudder = 0*constrain_float(rudder, radians(-30), radians(30));
-	if (!(isnan(rudder)) && !(isnan(delta_x4.z)))
-	{ rudder_last = rudder; }
+	rudder =0*constrain_float(rudder, radians(-30), radians(30));
+	if (!(isnan(rudder)) && !(isnan(delta_x4.z))) {
+        rudder_last = rudder;
+    }
 }
 
 
@@ -566,5 +593,16 @@ float MW_INDI::get_watch1() {return watch1;}
 float MW_INDI::get_watch2() {return watch2;}
 float MW_INDI::get_watch3() {return watch3;}
 float MW_INDI::get_watch4() {return watch4;}
-float MW_INDI::get_watch5() {return watch5;}
+float MW_INDI::get_watch5() {
+    return watch5;
+}
 float MW_INDI::get_watch6() {return watch6;}
+
+/************************* stabilize control reference input ************************/
+void MW_INDI::set_x2_ref(int32_t nav_roll_cd, int32_t nav_pitch_cd)
+{
+    mu_ref = float(nav_roll_cd / 100);
+    alpha_ref = _k_stab*(float(nav_pitch_cd / 100) - gamma);
+    beta_ref = 0;
+    x2_ref = Vector3f(mu_ref, alpha_ref, beta_ref);
+}

@@ -35,9 +35,9 @@ public:
 	void INDI_state_process_10HZ();
 	void INDI_state_process_400HZ();
 
-	void update_AOA_SSA();						//updata angle of attack and side slip angle
+	void update_AOA_SSA();						//update angle of attack and side slip angle
 	void update_velocity();						//update velocity and acceleration 
-	void update_kinematic_azimuth_angle();		//updata chi and chi rate
+	void update_kinematic_azimuth_angle();		//update chi and chi rate
 	void update_flight_path_angle();			//update gamma and gamma rate
 	void update_bank_angle();					//update mu
 
@@ -101,6 +101,9 @@ public:
     float get_watch5();
     float get_watch6();
 
+    //set attitude reference control input if in stabilize mode
+    void set_x2_ref(int32_t nav_roll_cd, int32_t nav_pitch_cd);
+
 	// this supports the MW_INDI_* user settable parameters
 	static const struct AP_Param::GroupInfo var_info[];
 
@@ -125,6 +128,8 @@ private:
 	AP_Float _k_p;
 	AP_Float _k_q;
 	AP_Float _k_r;
+
+	AP_Float _k_stab;
 
 	//Definition of control variables in x0
 	float X;			//position in the north direction
@@ -262,9 +267,10 @@ private:
 	float CL_alpha;		//the derrivation of lift coefficient due to AOA
 	float CD_alpha;		//the derrivation of drag coefficient due to AOA
 	float Cl_aileron;	//the derrivation of roll moment coefficient due to aileron
+	float Cl_rudder;   //the derrivation of roll moment coefficient due to rudder
 	float Cm_elavator;	//the derrivation of pitch moment coefficient due to elevator
 	float Cn_rudder;	//the derrivation of yaw moment coefficient due to rudder
-
+	float Cn_aileron;    //the derrivation of yaw moment coefficient due to aileron
 	bool trajectory_flag;
 
 	//Temporary watched variables

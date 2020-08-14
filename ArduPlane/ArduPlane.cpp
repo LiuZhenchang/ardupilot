@@ -707,52 +707,56 @@ void Plane::update_navigation()
             mission.update();
         }
         break;
-            
+
     case RTL:
-        if (quadplane.available() && quadplane.rtl_mode == 1 &&
-            (nav_controller->reached_loiter_target() ||
-             location_passed_point(current_loc, prev_WP_loc, next_WP_loc) ||
-             auto_state.wp_distance < MAX(qrtl_radius, quadplane.stopping_distance())) &&
-            AP_HAL::millis() - last_mode_change_ms > 1000) {
-            /*
-              for a quadplane in RTL mode we switch to QRTL when we
-              are within the maximum of the stopping distance and the
-              RTL_RADIUS
-             */
-            set_mode(QRTL, MODE_REASON_UNKNOWN);
-            break;
-        } else if (g.rtl_autoland == 1 &&
-            !auto_state.checked_for_autoland &&
-            reached_loiter_target() && 
-            labs(altitude_error_cm) < 1000) {
-            // we've reached the RTL point, see if we have a landing sequence
-            if (mission.jump_to_landing_sequence()) {
-                // switch from RTL -> AUTO
-                set_mode(AUTO, MODE_REASON_UNKNOWN);
-            }
+        /*
+         if (quadplane.available() && quadplane.rtl_mode == 1 &&
+         (nav_controller->reached_loiter_target() ||
+         location_passed_point(current_loc, prev_WP_loc, next_WP_loc) ||
+         auto_state.wp_distance < MAX(qrtl_radius, quadplane.stopping_distance())) &&
+         AP_HAL::millis() - last_mode_change_ms > 1000) {
+         set_mode(QRTL, MODE_REASON_UNKNOWN);
+         break;
+         } else if (g.rtl_autoland == 1 &&
+         !auto_state.checked_for_autoland &&
+         reached_loiter_target() &&
+         labs(altitude_error_cm) < 1000) {
+         // we've reached the RTL point, see if we have a landing sequence
+         if (mission.jump_to_landing_sequence()) {
+         // switch from RTL -> AUTO
+         set_mode(AUTO, MODE_REASON_UNKNOWN);
+         }
 
-            // prevent running the expensive jump_to_landing_sequence
-            // on every loop
-            auto_state.checked_for_autoland = true;
-        }
-        else if (g.rtl_autoland == 2 &&
-            !auto_state.checked_for_autoland) {
-            // Go directly to the landing sequence
-            if (mission.jump_to_landing_sequence()) {
-                // switch from RTL -> AUTO
-                set_mode(AUTO, MODE_REASON_UNKNOWN);
-            }
+         // prevent running the expensive jump_to_landing_sequence
+         // on every loop
+         auto_state.checked_for_autoland = true;
+         }
+         else if (g.rtl_autoland == 2 &&
+         !auto_state.checked_for_autoland) {
+         // Go directly to the landing sequence
+         if (mission.jump_to_landing_sequence()) {
+         // switch from RTL -> AUTO
+         set_mode(AUTO, MODE_REASON_UNKNOWN);
+         }
 
-            // prevent running the expensive jump_to_landing_sequence
-            // on every loop
-            auto_state.checked_for_autoland = true;
-        }
-        radius = abs(g.rtl_radius);
-        if (radius > 0) {
-            loiter.direction = (g.rtl_radius < 0) ? -1 : 1;
-        }
-        // fall through to LOITER
-        FALLTHROUGH;
+         // prevent running the expensive jump_to_landing_sequence
+         // on every loop
+         auto_state.checked_for_autoland = true;
+         }
+         radius = abs(g.rtl_radius);
+         if (radius > 0) {
+         loiter.direction = (g.rtl_radius < 0) ? -1 : 1;
+         }
+         // fall through to LOITER
+         FALLTHROUGH;
+         */
+        INDI_controller.trajectory_control(current_loc, next_WP_loc);
+        Log_Write_INDI_V();                                                 //Log write velocity
+        Log_Write_INDI_CHI();                                               //Log write kinametic azimuth angle
+        Log_Write_INDI_GAM();                                               //Log write flight path angle
+        Log_Write_INDI_X0();                                                //Log write location information
+        Log_Write_INDI_X1();                                                //Log write velocity vector  information
+        break;
 
     case LOITER:
     case AVOID_ADSB:
