@@ -69,6 +69,9 @@ float DerivativeFilter<T,FILTER_SIZE>::slope(void)
 
     // N in the paper is FILTER_SIZE
     switch (FILTER_SIZE) {
+    case 3:
+        result = (f(1) - f(-1)) / (x(1) - x(-1));
+        break;
     case 5:
         result = 2*2*(f(1) - f(-1)) / (x(1) - x(-1))
                  + 4*1*(f(2) - f(-2)) / (x(2) - x(-2));
@@ -120,6 +123,10 @@ void DerivativeFilter<T,FILTER_SIZE>::reset(void)
 }
 
 // add new instances as needed here
+template void DerivativeFilter<float, 3>::update(float sample, uint32_t timestamp);
+template float DerivativeFilter<float, 3>::slope(void);
+template void DerivativeFilter<float, 3>::reset(void);
+
 template void DerivativeFilter<float,5>::update(float sample, uint32_t timestamp);
 template float DerivativeFilter<float,5>::slope(void);
 template void DerivativeFilter<float,5>::reset(void);

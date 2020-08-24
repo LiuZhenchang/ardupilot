@@ -50,6 +50,7 @@ private:
     uint32_t        _timestamps[FILTER_SIZE];
 };
 
+typedef DerivativeFilter<float,3> DerivativeFilterFloat_Size3;
 typedef DerivativeFilter<float,5> DerivativeFilterFloat_Size5;
 typedef DerivativeFilter<float,7> DerivativeFilterFloat_Size7;
 typedef DerivativeFilter<float,9> DerivativeFilterFloat_Size9;

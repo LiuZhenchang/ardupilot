@@ -82,7 +82,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KALP",    8, MW_INDI, _k_alpha, 10.0f),
+	AP_GROUPINFO("GAIN_KALP",    8, MW_INDI, _k_alpha, 8.0f),
 
 	// @Param: GAIN_KBET
 	// @DisplayName: Desired sideslip angular velocity Proportional Gain
@@ -98,7 +98,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KP",    10, MW_INDI, _k_p, 6.0f),
+	AP_GROUPINFO("GAIN_KP",    10, MW_INDI, _k_p, 6.0f),                            //_delay_type 0, _k_p=6;
 
 	// @Param: GAIN_KQ
 	// @DisplayName: Desired pitch angular acceleration Proportional Gain
@@ -106,7 +106,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KQ",    11, MW_INDI, _k_q, 6.0f),
+	AP_GROUPINFO("GAIN_KQ",    11, MW_INDI, _k_q, 6.0f),                            //_delay_type 0, _k_q=6;
 
 	// @Param: GAIN_KR
 	// @DisplayName: Desired yaw angular acceleration Proportional Gain
@@ -114,7 +114,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KR",    12, MW_INDI, _k_r, 3.0f),
+	AP_GROUPINFO("GAIN_KR",    12, MW_INDI, _k_r, 6.0f),                            //_delay_type 0, _k_r=3;
 
     // @Param: GAIN_KSTAB
     // @DisplayName: Stabilize mode test Proportional Gain
@@ -123,6 +123,14 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
     // @Range: unknown
     // @User: Standard
     AP_GROUPINFO("GAIN_KSTAB",    13, MW_INDI, _k_stab, 0.1f),
+
+    // @Param: Delay_Type
+    // @DisplayName: The type of method used in dealing with the delay of flight states derivation
+    // @Description: 0 the incremental gain correction method;1 flight states delay method; 2 None delay derrivatives method
+    // @Increment: 1
+    // @Range: 0-2
+    // @User: Standard
+    AP_GROUPINFO("Delay_Type",    14, MW_INDI, _delay_type, 1),
 
 	AP_GROUPEND
 };
@@ -179,8 +187,13 @@ void MW_INDI::update_velocity()
 	_vdot3_filter.update(velocity.length(), now);					//the time stamp is in millim second
 	d_V3 = _vdot3_filter.slope() * 1.0e3;							//take 9 point derivative filter
 
+	//////////////////////////////////////////// d_V_4 ////////////////////////////////////////////////////////
+	_vdot_nodelay_filter.update(velocity.length(), now);
+	float d_V4 = _vdot_nodelay_filter.forcast();
+
 	//define d_V
-	d_V = d_V1;
+    if (_delay_type == 0 || _delay_type == 1) {d_V = d_V1;}
+    else {d_V = d_V4;}
 }
 
 /************************************************update mu***************************************************/
@@ -255,8 +268,13 @@ void MW_INDI::update_flight_path_angle()
 	////////////////////////////////////////////// d_gamma2 /////////////////////////////////////////////////////
 	d_gamma2 = (1 / V) * (a.x * sinf(alpha) * cosf(mu) - a.y * sinf(mu) - a.z * cosf(alpha) * cosf(mu));	//unit: rad/s
 
+	////////////////////////////////////////////// d_gamma3 /////////////////////////////////////////////////////
+	_gamdot_nodelay_filter.update(gamma, now);
+	float d_gamma3 = _gamdot_nodelay_filter.forcast();
+
 	//Determining which method to be used
-	d_gamma = d_gamma1;
+	if (_delay_type == 0 || _delay_type == 1) { d_gamma = d_gamma1; }
+	else { d_gamma = d_gamma3; }
 
 }
 
@@ -284,13 +302,24 @@ void MW_INDI::INDI_state_process_400HZ()
 	q = AP::ins().get_gyro().y;
 	r = AP::ins().get_gyro().z;
 
-	_pdot_filter.update(p, now);
-	_qdot_filter.update(q, now);
-	_rdot_filter.update(r, now);
+    if (_delay_type == 0 || _delay_type == 1) {
+        _pdot_filter.update(p, now);
+        _qdot_filter.update(q, now);
+        _rdot_filter.update(r, now);
 
-	d_p = _pdot_filter.slope() * 1.0e3;
-	d_q = _qdot_filter.slope() * 1.0e3;
-	d_r = _rdot_filter.slope() * 1.0e3;
+        d_p = _pdot_filter.slope() * 1.0e3;
+        d_q = _qdot_filter.slope() * 1.0e3;
+        d_r = _rdot_filter.slope() * 1.0e3;
+    }
+    else {
+        _pdot_nodelay_filter.update(p, now);
+        _qdot_nodelay_filter.update(q, now);
+        _rdot_nodelay_filter.update(r, now);
+
+        d_p = _pdot_nodelay_filter.forcast();
+        d_q = _qdot_nodelay_filter.forcast();
+        d_r = _rdot_nodelay_filter.forcast();
+    }
 
 	d_x3 = Vector3f(d_p, d_q, d_r);
 
@@ -341,7 +370,7 @@ void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Lo
 {
 	
 	INDI_state_process_10HZ();
-	//uint64_t now = AP_HAL::millis();
+	uint64_t now = AP_HAL::millis();
 	struct Location _current_loc;
 	// Get current position and velocity
 	if (_ahrs.get_position(_current_loc) == false) {
@@ -414,9 +443,19 @@ void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Lo
 
     increm_alpha = constrain_float((float) increm_alpha, -10, 10);
     increm_T_x = constrain_float((float) increm_T_x, -20, 20);
+    if (_delay_type == 0) {
+        alpha_ref = constrain_float(alpha + 0.2 * increm_alpha, -M_PI/4, M_PI/4);
+        T_x = constrain_float(T_x_last + 0.1 * increm_T_x, T_min, T_max);
+    } else if (_delay_type == 1) {
+        _alpha_delay.update(alpha, now);
+        alpha_ref = constrain_float(_alpha_delay.delay_output() + 0.8*increm_alpha, -M_PI/4, M_PI/4);
+        _Tx_delay.update(T_x, now);
+        T_x = constrain_float(_Tx_delay.delay_output() + 0.5*increm_T_x, T_min, T_max);
+    } else if (_delay_type == 2) {
+        alpha_ref = constrain_float(alpha + increm_alpha, -M_PI/4, M_PI/4);
+        T_x = constrain_float(T_x_last + increm_T_x, T_min, T_max);
+    }
 
-	alpha_ref = constrain_float(alpha + 0.2*increm_alpha,-M_PI/4,M_PI/4);
-	T_x = constrain_float(T_x_last + 0.1*increm_T_x, T_min, T_max);
 	T_x_last = T_x;
 
 	watch2=float(a11);
@@ -464,7 +503,7 @@ void MW_INDI::attitude_control()
 	///////////////////////////////////////////////////////////////////////////////////////////
 	INDI_state_process_400HZ();
 
-	//uint64_t now = AP_HAL::millis();
+	uint64_t now = AP_HAL::millis();
 	x2 = Vector3f(mu, alpha, beta);
 	//K_x2 is a diagonal matrix, which is the gain matrix of the attitude linear control
 	Matrix3f K_x2 = Matrix3f(	_k_mu,		0,			0,
@@ -515,21 +554,43 @@ void MW_INDI::attitude_control()
 	M_reference.invert();
 	
 	Vector3f delta_x4;
-	delta_x4 = M_coefficent* M_reference * M_inertia * (d_x3_des- d_x3)* (0.015 / (0.5 * air_density * sq(V) * reference_area));
+	delta_x4 = M_coefficent* M_reference * M_inertia * (d_x3_des- d_x3)* (1 / (0.5 * air_density * sq(V) * reference_area));
 
-	aileron = aileron_last + constrain_float(delta_x4.x, -0.1, 0.1); //LZC: Caution: the time factor is determined by the  control frequency
-    aileron = constrain_float(aileron, radians(-30), radians(30));
+	//Calculate actuator deflection according to delay type
+    if (_delay_type == 0) {
+        aileron = aileron_last
+                + 0.01 * constrain_float(delta_x4.x, -0.3, 0.3);
+        elevator = elevator_last
+                + 0.01 * constrain_float(delta_x4.y, -0.3, 0.3);
+        rudder = rudder_last
+                + 0.01 * constrain_float(delta_x4.z, -0.3, 0.3);
+    } else if (_delay_type == 1) {
+        _aileron_delay.update(aileron, now);
+        aileron = _aileron_delay.delay_output()
+                + 0.1 * constrain_float(delta_x4.x, -0.3, 0.3);
+        _elevator_delay.update(elevator, now);
+        elevator = _elevator_delay.delay_output()
+                + 0.1 * constrain_float(delta_x4.y, -0.3, 0.3);
+        _rudder_delay.update(rudder, now);
+        rudder = _rudder_delay.delay_output()
+                + 0.1 * constrain_float(delta_x4.z, -0.3, 0.3);
+    } else if (_delay_type == 2) {
+        aileron = aileron_last + constrain_float(delta_x4.x, -0.3, 0.3);
+        elevator = elevator_last + constrain_float(delta_x4.y, -0.3, 0.3);
+        rudder = rudder_last + constrain_float(delta_x4.z, -0.3, 0.3);
+    }
+
+	// Constrain the actuator control output
+	aileron = constrain_float(aileron, radians(-30), radians(30));
     if (!(isnan(aileron)) && !(isnan(delta_x4.x))) {
         aileron_last = aileron;
     }
 
-    elevator = elevator_last + constrain_float(delta_x4.y, -0.1, 0.1);
     elevator = constrain_float(elevator, radians(-30), radians(30));
     if (!(isnan(elevator)) && !(isnan(delta_x4.y))) {
         elevator_last = elevator;
     }
-	
-	rudder = rudder_last + constrain_float(delta_x4.z, -0.1, 0.1);
+
 	rudder =0*constrain_float(rudder, radians(-30), radians(30));
 	if (!(isnan(rudder)) && !(isnan(delta_x4.z))) {
         rudder_last = rudder;

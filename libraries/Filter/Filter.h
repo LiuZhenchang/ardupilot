@@ -9,3 +9,6 @@
 #include "LowPassFilter.h"
 #include "ModeFilter.h"
 #include "Butter.h"
+
+#include "INDI_NoneDelayDerivativeFilter.h"
+#include "INDI_DelayFilter.h"

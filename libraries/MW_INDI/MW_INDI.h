@@ -130,6 +130,7 @@ private:
 	AP_Float _k_r;
 
 	AP_Float _k_stab;
+    AP_Int8  _delay_type;
 
 	//Definition of control variables in x0
 	float X;			//position in the north direction
@@ -184,12 +185,19 @@ private:
 	float d_gamma1;     //gamma 9 point derivative filter
 	float d_gamma2;     //calculated by body axis acceleration
 
-	// declares a 5point average filter using floats
+    // declares trajectory control loop derivative filters using floats
 	AverageFilterFloat_Size5		_vdot1_filter;
 	DerivativeFilterFloat_Size7		_vdot2_filter;
 	DerivativeFilterFloat_Size9     _vdot3_filter;
 	DerivativeFilterFloat_Size9     _chidot_filter;
 	DerivativeFilterFloat_Size9     _gammadot_filter;
+
+    INDI_NoneDelayDerivativeFilter  _vdot_nodelay_filter;
+    INDI_NoneDelayDerivativeFilter  _gamdot_nodelay_filter;
+
+    // declares trajectory control loop delay filters using floats
+    INDI_DelayFilterFloat_Size9     _alpha_delay;
+    INDI_DelayFilterFloat_Size9     _Tx_delay;
 
 	float V_ref;		//reference total velocity of the aircraft
 	float chi_ref;		//reference kinematic azimuth angle
@@ -238,9 +246,20 @@ private:
 	float d_r;		//desired yaw acceleration 
 	Vector3f d_x3;	//desired angular acceleration vector
 
+	// declares attitude control loop derivative filters using floats
 	DerivativeFilterFloat_Size9     _pdot_filter;
 	DerivativeFilterFloat_Size9     _qdot_filter;
 	DerivativeFilterFloat_Size9     _rdot_filter;
+
+    INDI_NoneDelayDerivativeFilter  _pdot_nodelay_filter;
+    INDI_NoneDelayDerivativeFilter  _qdot_nodelay_filter;
+    INDI_NoneDelayDerivativeFilter  _rdot_nodelay_filter;
+
+    // declares attitude control loop delay filters using floats
+    INDI_DelayFilterFloat_Size9     _aileron_delay;
+    INDI_DelayFilterFloat_Size9     _elevator_delay;
+    INDI_DelayFilterFloat_Size9     _rudder_delay;
+
 
 	float d_p_des;		//desired roll acceleration
 	float d_q_des;		//desired pitch acceleration
