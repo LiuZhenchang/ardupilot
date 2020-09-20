@@ -71,6 +71,11 @@ void Plane::loiter_angle_update(void)
 //****************************************************************
 void Plane::navigate()
 {
+    //LZC INDI
+    if (arming.is_armed()) {
+        INDI_controller.INDI_state_process_10HZ();
+    }
+
     // allow change of nav controller mid-flight
     set_nav_controller();
 

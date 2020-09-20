@@ -50,7 +50,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KV",    4, MW_INDI, _k_V, 2.0f),
+	AP_GROUPINFO("GAIN_KV",    4, MW_INDI, _k_V, 1.0f),
 
 	// @Param: GAIN_KCHI
 	// @DisplayName: Desired heading angular velocity Proportional Gain
@@ -66,7 +66,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KGAM",    6, MW_INDI, _k_gamma, 2.0f),
+	AP_GROUPINFO("GAIN_KGAM",    6, MW_INDI, _k_gamma, 1.0f),
 
 	// @Param: GAIN_KMU
 	// @DisplayName: Desired bank angular velocity Proportional Gain
@@ -82,7 +82,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KALP",    8, MW_INDI, _k_alpha, 8.0f),
+	AP_GROUPINFO("GAIN_KALP",    8, MW_INDI, _k_alpha, 6.0f),
 
 	// @Param: GAIN_KBET
 	// @DisplayName: Desired sideslip angular velocity Proportional Gain
@@ -114,8 +114,8 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KR",    12, MW_INDI, _k_r, 6.0f),                            //_delay_type 0, _k_r=3;
-
+	AP_GROUPINFO("GAIN_KR",    12, MW_INDI, _k_r, 3.0f),                            //_delay_type 0, _k_r=3;
+	                                                                                //_delay_type 1, _k_r=6;
     // @Param: GAIN_KSTAB
     // @DisplayName: Stabilize mode test Proportional Gain
     // @Description: This is the gain to calculate reference alpha for stabilize mode test
@@ -126,11 +126,11 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 
     // @Param: Delay_Type
     // @DisplayName: The type of method used in dealing with the delay of flight states derivation
-    // @Description: 0 the incremental gain correction method;1 flight states delay method; 2 None delay derrivatives method
+    // @Description: 0 the incremental gain correction method;1 flight states delay method; 2 None delay derivatives method
     // @Increment: 1
     // @Range: 0-2
     // @User: Standard
-    AP_GROUPINFO("Delay_Type",    14, MW_INDI, _delay_type, 1),
+    AP_GROUPINFO("Delay_Type",    14, MW_INDI, _delay_type, 0),
 
 	AP_GROUPEND
 };
@@ -189,10 +189,10 @@ void MW_INDI::update_velocity()
 
 	//////////////////////////////////////////// d_V_4 ////////////////////////////////////////////////////////
 	_vdot_nodelay_filter.update(velocity.length(), now);
-	float d_V4 = _vdot_nodelay_filter.forcast();
+	d_V4 = _vdot_nodelay_filter.forcast();
 
 	//define d_V
-    if (_delay_type == 0 || _delay_type == 1) {d_V = d_V1;}
+    if (_delay_type == 0 || _delay_type == 1) {d_V = d_V3;}
     else {d_V = d_V4;}
 }
 
@@ -270,7 +270,7 @@ void MW_INDI::update_flight_path_angle()
 
 	////////////////////////////////////////////// d_gamma3 /////////////////////////////////////////////////////
 	_gamdot_nodelay_filter.update(gamma, now);
-	float d_gamma3 = _gamdot_nodelay_filter.forcast();
+	d_gamma3 = _gamdot_nodelay_filter.forcast();
 
 	//Determining which method to be used
 	if (_delay_type == 0 || _delay_type == 1) { d_gamma = d_gamma1; }
@@ -369,7 +369,7 @@ void MW_INDI::INDI_aerodynamic_coefficient()
 void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Location& next_WP)
 {
 	
-	INDI_state_process_10HZ();
+	//INDI_state_process_10HZ();
 	uint64_t now = AP_HAL::millis();
 	struct Location _current_loc;
 	// Get current position and velocity
@@ -444,7 +444,7 @@ void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Lo
     increm_alpha = constrain_float((float) increm_alpha, -10, 10);
     increm_T_x = constrain_float((float) increm_T_x, -20, 20);
     if (_delay_type == 0) {
-        alpha_ref = constrain_float(alpha + 0.2 * increm_alpha, -M_PI/4, M_PI/4);
+        alpha_ref = constrain_float(alpha + 0.3 * increm_alpha, -M_PI/4, M_PI/4);
         T_x = constrain_float(T_x_last + 0.1 * increm_T_x, T_min, T_max);
     } else if (_delay_type == 1) {
         _alpha_delay.update(alpha, now);
@@ -453,16 +453,14 @@ void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Lo
         T_x = constrain_float(_Tx_delay.delay_output() + 0.5*increm_T_x, T_min, T_max);
     } else if (_delay_type == 2) {
         alpha_ref = constrain_float(alpha + increm_alpha, -M_PI/4, M_PI/4);
-        T_x = constrain_float(T_x_last + increm_T_x, T_min, T_max);
+        T_x = constrain_float(T_x_last + 0.1*increm_T_x, T_min, T_max);
     }
 
 	T_x_last = T_x;
 
-	watch2=float(a11);
-    watch3=float(a11 * a22 - a21 * a12);
-    watch4 = float(a21);
-    watch5 = float(a22);
-    watch6 = float(increm_alpha);
+	watch1 = float(increm_T_x);
+    watch2 = float(increm_alpha);
+    watch3 = float(a11 * a22 - a21 * a12);
 
     //calculate reference bank angle
     mu_ref = atanf(
@@ -492,7 +490,7 @@ void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Lo
     beta_ref = 0;
     x2_ref = Vector3f(mu_ref, alpha_ref, beta_ref);
 
-    trajectory_flag = true;
+    set_trajectory_flag(true);
 }
 
 
@@ -501,7 +499,7 @@ void MW_INDI::attitude_control()
 	///////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////Rotational kinematic control loop in NDI//////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////
-	INDI_state_process_400HZ();
+	//INDI_state_process_400HZ();
 
 	uint64_t now = AP_HAL::millis();
 	x2 = Vector3f(mu, alpha, beta);
@@ -511,8 +509,6 @@ void MW_INDI::attitude_control()
 								0,			0,			_k_beta);
 	//calculate desired flight path vector
 	d_x2_des = K_x2 * (x2_ref - x2);
-
-    watch1 = d_chi2 * 180 / M_PI;
 
 	Matrix3f M_rot_kine_1 = Matrix3f(	cosf(alpha) * cosf(beta),			0,				sinf(alpha),
 										sinf(beta),						    1,				0,
@@ -559,11 +555,11 @@ void MW_INDI::attitude_control()
 	//Calculate actuator deflection according to delay type
     if (_delay_type == 0) {
         aileron = aileron_last
-                + 0.01 * constrain_float(delta_x4.x, -0.3, 0.3);
+                + 0.03 * constrain_float(delta_x4.x, -0.3, 0.3);
         elevator = elevator_last
-                + 0.01 * constrain_float(delta_x4.y, -0.3, 0.3);
+                + 0.03 * constrain_float(delta_x4.y, -0.3, 0.3);
         rudder = rudder_last
-                + 0.01 * constrain_float(delta_x4.z, -0.3, 0.3);
+                + 0.03 * constrain_float(delta_x4.z, -0.3, 0.3);
     } else if (_delay_type == 1) {
         _aileron_delay.update(aileron, now);
         aileron = _aileron_delay.delay_output()
@@ -575,9 +571,9 @@ void MW_INDI::attitude_control()
         rudder = _rudder_delay.delay_output()
                 + 0.1 * constrain_float(delta_x4.z, -0.3, 0.3);
     } else if (_delay_type == 2) {
-        aileron = aileron_last + constrain_float(delta_x4.x, -0.3, 0.3);
-        elevator = elevator_last + constrain_float(delta_x4.y, -0.3, 0.3);
-        rudder = rudder_last + constrain_float(delta_x4.z, -0.3, 0.3);
+        aileron = aileron_last + 0.1*constrain_float(delta_x4.x, -0.3, 0.3);
+        elevator = elevator_last + 0.1*constrain_float(delta_x4.y, -0.3, 0.3);
+        rudder = rudder_last + 0.1*constrain_float(delta_x4.z, -0.3, 0.3);
     }
 
 	// Constrain the actuator control output
@@ -595,6 +591,12 @@ void MW_INDI::attitude_control()
 	if (!(isnan(rudder)) && !(isnan(delta_x4.z))) {
         rudder_last = rudder;
     }
+
+    watch4 = constrain_float(delta_x4.x, -0.3, 0.3);
+    watch5 = constrain_float(delta_x4.y, -0.3, 0.3);
+    watch6 = constrain_float(delta_x4.z, -0.3, 0.3);
+
+    set_attitude_flag(true);
 }
 
 
@@ -603,6 +605,7 @@ float MW_INDI::get_V() {return V;}
 float MW_INDI::get_d_V1() {return d_V1;}
 float MW_INDI::get_d_V2() {return d_V2;}
 float MW_INDI::get_d_V3() {return d_V3;}
+float MW_INDI::get_d_V4() {return d_V4;}
 
 Vector3f MW_INDI::get_a_body_1() {return a_body_1;}
 Vector3f MW_INDI::get_a_body_2() {return a_body_2;}
@@ -620,6 +623,7 @@ float MW_INDI::get_gamma_2() {return degrees(gamma_2);}
 float MW_INDI::get_gamma_3() {return degrees(gamma_3);}
 float MW_INDI::get_d_gamma1() {return degrees(d_gamma1);}
 float MW_INDI::get_d_gamma2() {return degrees(d_gamma2);}
+float MW_INDI::get_d_gamma3() {return degrees(d_gamma3);}
 
 /********************* Translational kinematic control Loop Log**********************/
 Vector3f MW_INDI::get_x0() {return x0;}
@@ -641,7 +645,17 @@ float MW_INDI::get_thrust() {return T_x;}
 float MW_INDI::get_aileron() { return degrees(aileron); }
 float MW_INDI::get_elevator() { return degrees(elevator); }
 float MW_INDI::get_rudder() { return degrees(rudder); }
+
+/******************* set control variables when flight mode switch ******************/
 bool  MW_INDI::get_trajectory_flag() { return trajectory_flag; }
+void  MW_INDI::set_trajectory_flag(bool flag){trajectory_flag=flag;}
+bool  MW_INDI::get_attitude_flag() { return attitude_flag; }
+void  MW_INDI::set_attitude_flag(bool flag){attitude_flag=flag;}
+
+void MW_INDI::set_aileron_last(int32_t SRV_aileron){aileron_last=float(SRV_aileron/100);}
+void MW_INDI::set_elevator_last(int32_t SRV_elevator){elevator_last=float(SRV_elevator/100);}
+void MW_INDI::set_rudder_last(int32_t SRV_rudder){rudder_last=float(SRV_rudder/100);}
+void MW_INDI::set_thrust_last(int32_t SRV_throttle){T_x_last=float(T_max*SRV_throttle/100);}
 
 /****************************** control output signal *******************************/
 int32_t MW_INDI::get_aileron_out(){return int32_t(degrees(aileron)*100);}
@@ -654,9 +668,7 @@ float MW_INDI::get_watch1() {return watch1;}
 float MW_INDI::get_watch2() {return watch2;}
 float MW_INDI::get_watch3() {return watch3;}
 float MW_INDI::get_watch4() {return watch4;}
-float MW_INDI::get_watch5() {
-    return watch5;
-}
+float MW_INDI::get_watch5() {return watch5;}
 float MW_INDI::get_watch6() {return watch6;}
 
 /************************* stabilize control reference input ************************/

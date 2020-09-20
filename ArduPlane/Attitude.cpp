@@ -380,8 +380,15 @@ void Plane::stabilize_acro(float speed_scaler)
  */
 void Plane::stabilize()
 {
+    //LZC INDI
+    if (arming.is_armed()) {
+        INDI_controller.INDI_state_process_400HZ();
+    }
+
     if (control_mode == MANUAL) {
-        // nothing to do
+        // LZC INDI
+        INDI_controller.set_trajectory_flag(false);
+        INDI_controller.set_attitude_flag(false);
         return;
     }
     float speed_scaler = get_speed_scaler();
@@ -405,6 +412,32 @@ void Plane::stabilize()
     }
     last_stabilize_ms = now;
 
+    /****************************** INDI Controller ********************************/
+    if (!INDI_controller.get_trajectory_flag()) {
+        //INDI_controller.INDI_state_process_10HZ();
+        INDI_controller.set_x2_ref(nav_roll_cd, nav_pitch_cd);
+    }
+    if (!INDI_controller.get_attitude_flag()) {
+        INDI_controller.set_aileron_last(SRV_Channels::get_output_scaled(SRV_Channel::k_aileron));
+        INDI_controller.set_elevator_last(SRV_Channels::get_output_scaled(SRV_Channel::k_elevator));
+        INDI_controller.set_rudder_last(SRV_Channels::get_output_scaled(SRV_Channel::k_rudder));
+        INDI_controller.set_thrust_last(SRV_Channels::get_output_scaled(SRV_Channel::k_throttle));
+        INDI_controller.set_x2_ref(nav_roll_cd, nav_pitch_cd);
+    }
+    INDI_controller.attitude_control();                 //INDI Test
+
+    if (log_count == 1) {
+        Log_Write_INDI_X2();
+        Log_Write_INDI_X3();
+        Log_Write_INDI_X4();
+        Log_Write_INDI_WATCH();
+    }
+    log_count++;
+    if (log_count > 1) {
+        log_count = 0;
+    }
+    /*******************************************************************************/
+
     if (control_mode == TRAINING) {
         stabilize_training(speed_scaler);
     } else if (control_mode == ACRO) {
@@ -426,26 +459,6 @@ void Plane::stabilize()
             stabilize_stick_mixing_direct();
         }
         stabilize_yaw(speed_scaler);                        //LZC Caution
-
-        /****************************** INDI Controller ********************************/
-        if (!INDI_controller.get_trajectory_flag()) {
-            INDI_controller.INDI_state_process_10HZ();
-            INDI_controller.set_x2_ref(nav_roll_cd, nav_pitch_cd);
-        }
-
-        INDI_controller.attitude_control();                 //INDI Test
-
-        if (log_count == 1) {
-            Log_Write_INDI_X2();
-            Log_Write_INDI_X3();
-            Log_Write_INDI_X4();
-            Log_Write_INDI_WATCH();
-        }
-        log_count++;
-        if (log_count > 1) {
-            log_count = 0;
-        }
-        /*******************************************************************************/
     }
 
     /*

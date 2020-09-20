@@ -301,6 +301,7 @@ struct PACKED log_INDI_V {
     float d_V1;
     float d_V2;
     float d_V3;
+    float d_V4;
     float ab1_x;
     float ab1_y;
     float ab1_z;
@@ -318,6 +319,7 @@ void Plane::Log_Write_INDI_V(void)
             d_V1                :INDI_controller.get_d_V1(),
             d_V2                :INDI_controller.get_d_V2(),
             d_V3                :INDI_controller.get_d_V3(),
+            d_V4                :INDI_controller.get_d_V4(),
             ab1_x               :INDI_controller.get_a_body_1().x,
             ab1_y               :INDI_controller.get_a_body_1().y,
             ab1_z               :INDI_controller.get_a_body_1().z,
@@ -363,6 +365,7 @@ struct PACKED log_INDI_GAM {
     float gamma_3;
     float d_gamma1;
     float d_gamma2;
+    float d_gamma3;
 
 };
 
@@ -377,6 +380,7 @@ void Plane::Log_Write_INDI_GAM(void)
             gamma_3             :INDI_controller.get_gamma_3(),
             d_gamma1            :INDI_controller.get_d_gamma1(),
             d_gamma2            :INDI_controller.get_d_gamma2(),
+            d_gamma3            :INDI_controller.get_d_gamma3(),
         };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -586,11 +590,11 @@ const struct LogStructure Plane::log_structure[] = {
 
       //INDI Log
     { LOG_INDIV_MSG, sizeof(log_INDI_V),
-      "INDV", "Qffffffffff",  "TimeUS,V,d_V1,d_V2,d_V3,ab1_x,ab1_y,ab1_z,ab2_x,ab2_y,ab2_z", "snooooooooo", "F0000000000" },
+      "INDV", "Qfffffffffff",  "TimeUS,V,d_V1,d_V2,d_V3,d_V4,ab1_x,ab1_y,ab1_z,ab2_x,ab2_y,ab2_z", "snoooooooooo", "F00000000000" },
     { LOG_INDICHI_MSG, sizeof(log_INDI_CHI),
       "INDC", "Qfffff",  "TimeUS,chi_1,chi_2,chi_3,d_chi1,d_chi2", "sdddkk", "F00000" },
     { LOG_INDIGAM_MSG, sizeof(log_INDI_GAM),
-      "INDG", "Qfffff",  "TimeUS,gam_1,gam_2,gam_3,d_gam1,d_gam2", "sdddkk", "F00000" },
+      "INDG", "Qffffff",  "TimeUS,gam_1,gam_2,gam_3,d_gam1,d_gam2,d_gam3", "sdddkkk", "F000000" },
     { LOG_INDIX0_MSG, sizeof(log_INDI_X0),
       "INX0", "Qffffff",  "TimeUS,X,Y,Z,X_ref,Y_ref,Z_ref", "smmmmmm", "F000000" },
     { LOG_INDIX1_MSG, sizeof(log_INDI_X1),

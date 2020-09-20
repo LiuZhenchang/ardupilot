@@ -54,6 +54,7 @@ public:
 	float get_d_V1();
 	float get_d_V2();
 	float get_d_V3();
+	float get_d_V4();
 
 	Vector3f get_a_body_1();
 	Vector3f get_a_body_2();
@@ -70,6 +71,7 @@ public:
     float get_gamma_3();
     float get_d_gamma1();
     float get_d_gamma2();
+    float get_d_gamma3();
 
     Vector3f get_x0();
     Vector3f get_x0_ref();
@@ -87,6 +89,14 @@ public:
     Vector3f get_x3_ref();
 
     bool get_trajectory_flag();
+    void set_trajectory_flag(bool flag);
+    bool get_attitude_flag();
+    void set_attitude_flag(bool flag);
+
+    void set_aileron_last(int32_t SRV_aileron);
+    void set_elevator_last(int32_t SRV_elevator);
+    void set_rudder_last(int32_t SRV_rudder);
+    void set_thrust_last(int32_t SRV_throttle);
 
     int32_t get_aileron_out();                      //get aileron out put signal range from -4500 to 45000
     int32_t get_elevator_out();                     //get elevator out put signal range from -4500 to 45000
@@ -154,9 +164,10 @@ private:
 
 	//Definition of control variables in x1
 	float V;			//total velocity of the aircraft
-	float d_V1;          //velocity rate calculated by body axis acceleration
-	float d_V2;          //velocity rate calculated by 7 point derivative filter
-	float d_V3;          //velocity rate calculated by 9 point derivative filter
+	float d_V1;         //velocity rate calculated by body axis acceleration
+	float d_V2;         //velocity rate calculated by 7 point derivative filter
+	float d_V3;         //velocity rate calculated by 9 point derivative filter
+	float d_V4;         //velocity rate calculated by none delay derivative filter
 
 	Vector3f a_body_1;  //acceleration in body axis calculated by ground axis velocity
 	Vector3f a_body_2;  //acceleration in body axis acquired by gyroscope
@@ -182,17 +193,19 @@ private:
 	float d_chi_last;   //avoid the sudden change of d_chi value, when chi stride accross 180 degrees
 
 	float d_gamma;		//the derivation of flight path angle
-	float d_gamma1;     //gamma 9 point derivative filter
-	float d_gamma2;     //calculated by body axis acceleration
+	float d_gamma1;     //gamma rate calculated by 9 point derivative filter
+	float d_gamma2;     //gamma rate calculated by body axis acceleration
+	float d_gamma3;     //gamma rate calculated by none delay derivative filter
 
     // declares trajectory control loop derivative filters using floats
 	AverageFilterFloat_Size5		_vdot1_filter;
 	DerivativeFilterFloat_Size7		_vdot2_filter;
 	DerivativeFilterFloat_Size9     _vdot3_filter;
-	DerivativeFilterFloat_Size9     _chidot_filter;
-	DerivativeFilterFloat_Size9     _gammadot_filter;
+	INDI_NoneDelayDerivativeFilter  _vdot_nodelay_filter;
 
-    INDI_NoneDelayDerivativeFilter  _vdot_nodelay_filter;
+	DerivativeFilterFloat_Size9     _chidot_filter;
+
+	DerivativeFilterFloat_Size9     _gammadot_filter;
     INDI_NoneDelayDerivativeFilter  _gamdot_nodelay_filter;
 
     // declares trajectory control loop delay filters using floats
@@ -291,6 +304,7 @@ private:
 	float Cn_rudder;	//the derrivation of yaw moment coefficient due to rudder
 	float Cn_aileron;    //the derrivation of yaw moment coefficient due to aileron
 	bool trajectory_flag;
+	bool attitude_flag;
 
 	//Temporary watched variables
 	float watch1;
