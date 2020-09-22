@@ -5,11 +5,11 @@ Liuzhenchang 2020.5.21
 */
 
 #define air_density		1.28	//air density, unit kg/m^3
-#define reference_area	0.982	//reference wing area, unit m^2
-#define reference_c		0.351	//reference chord length, unit m
-#define reference_b		2.795	//reference wing span, unit m
-#define vehicle_mass    5.897	//Vehicle mass, unit kg
-#define T_max           80      //Maximum Thrust
+#define reference_area	0.165	//reference wing area, unit m^2
+#define reference_c		0.15	//reference chord length, unit m
+#define reference_b		1.10	//reference wing span, unit m
+#define vehicle_mass    0.85	//Vehicle mass, unit kg
+#define T_max           6       //Maximum Thrust
 #define T_min           0       //Minimum Thrust
 
 #include "MW_INDI.h"
@@ -136,10 +136,15 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 };
 
 /*******************************updata angle of attack and side slip angle************************************/
-void MW_INDI::update_AOA_SSA() 
-{
-	alpha = radians(_ahrs.getAOA());	//unit: rad
-	beta = radians(_ahrs.getSSA());		//unit: rad
+void MW_INDI::update_AOA_SSA() {
+    if (V > 5) {
+        alpha = radians(_ahrs.getAOA());    //unit: rad
+        beta = radians(_ahrs.getSSA());     //unit: rad
+    } else {
+        alpha = radians(0.01 * wrap_180_cd(_ahrs.pitch_sensor));
+        beta = 0;
+    }
+
 }
 
 
@@ -259,7 +264,7 @@ void MW_INDI::update_flight_path_angle()
 
 	//define gamma
 	if (velocity.length() > 5) { gamma = gamma_1; }                     // When velocity is small using yaw angle to replace chi
-	else { gamma = gamma_1; }
+	else { gamma = 0; }
 
 	////////////////////////////////////////////// d_gamma1 /////////////////////////////////////////////////////
 	_gammadot_filter.update(gamma, now);
@@ -543,9 +548,9 @@ void MW_INDI::attitude_control()
 										0,				reference_c,	0,
 										0,				0,				reference_b);
 
-	Matrix3f M_inertia = Matrix3f(	2.644,		0,		    0,
-									0,		    2.101,		0,
-									0,		    0   ,		2.590);
+	Matrix3f M_inertia = Matrix3f(	0.5,		0,		    0,
+									0,		    0.4,		0,
+									0,		    0   ,		0.5);
 	M_coefficent.invert();
 	M_reference.invert();
 	
