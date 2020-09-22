@@ -139,8 +139,24 @@ private:
 	AP_Float _k_q;
 	AP_Float _k_r;
 
+	AP_Float _Ink_alp;
+	AP_Float _Ink_Tx;
+
+	AP_Float _Ink_aileron;
+    AP_Float _Ink_elevator;
+	AP_Float _Ink_rudder;
+
 	AP_Float _k_stab;
     AP_Int8  _delay_type;
+
+    //////////////////////////////////////////////////////////////////////////
+    /////////////////////////// INDI vehicle property ////////////////////////
+    //////////////////////////////////////////////////////////////////////////
+    AP_Float ref_area;
+    AP_Float ref_c;
+    AP_Float ref_b;
+    AP_Float mass;
+    AP_Float T_max;
 
 	//Definition of control variables in x0
 	float X;			//position in the north direction

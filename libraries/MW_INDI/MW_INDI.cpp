@@ -5,11 +5,6 @@ Liuzhenchang 2020.5.21
 */
 
 #define air_density		1.28	//air density, unit kg/m^3
-#define reference_area	0.165	//reference wing area, unit m^2
-#define reference_c		0.15	//reference chord length, unit m
-#define reference_b		1.10	//reference wing span, unit m
-#define vehicle_mass    0.85	//Vehicle mass, unit kg
-#define T_max           6       //Maximum Thrust
 #define T_min           0       //Minimum Thrust
 
 #include "MW_INDI.h"
@@ -98,7 +93,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KP",    10, MW_INDI, _k_p, 6.0f),                            //_delay_type 0, _k_p=6;
+	AP_GROUPINFO("GAIN_KP",    10, MW_INDI, _k_p, 6.0f),                            //_delay_type 0; _k_p=6;
 
 	// @Param: GAIN_KQ
 	// @DisplayName: Desired pitch angular acceleration Proportional Gain
@@ -106,7 +101,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KQ",    11, MW_INDI, _k_q, 6.0f),                            //_delay_type 0, _k_q=6;
+	AP_GROUPINFO("GAIN_KQ",    11, MW_INDI, _k_q, 6.0f),                            //_delay_type 0; _k_q=6;
 
 	// @Param: GAIN_KR
 	// @DisplayName: Desired yaw angular acceleration Proportional Gain
@@ -114,8 +109,8 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
 	// @Increment: unknown
 	// @Range: unknown
 	// @User: Standard
-	AP_GROUPINFO("GAIN_KR",    12, MW_INDI, _k_r, 3.0f),                            //_delay_type 0, _k_r=3;
-	                                                                                //_delay_type 1, _k_r=6;
+	AP_GROUPINFO("GAIN_KR",    12, MW_INDI, _k_r, 3.0f),                            //_delay_type=0,1,2; _k_r=3,6;
+
     // @Param: GAIN_KSTAB
     // @DisplayName: Stabilize mode test Proportional Gain
     // @Description: This is the gain to calculate reference alpha for stabilize mode test
@@ -131,6 +126,86 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
     // @Range: 0-2
     // @User: Standard
     AP_GROUPINFO("Delay_Type",    14, MW_INDI, _delay_type, 0),
+
+    // @Param: GAIN_INKALP
+    // @DisplayName: Incremental gain of AOA
+    // @Description: This is the gain to adjust the incremental size when calculating reference alpha
+    // @Increment: unknown
+    // @Range: unknown
+    // @User: Standard
+    AP_GROUPINFO("GAIN_INKALP",    15, MW_INDI, _Ink_alp, 0.3f),                  //_delay_type 0,1,2; _Inc_k_alp=0.3,0.8,1;
+
+    // @Param: GAIN_INKTX
+    // @DisplayName: Incremental gain of thrust
+    // @Description: This is the gain to adjust the incremental size when calculating reference T_x
+    // @Increment: unknown
+    // @Range: unknown
+    // @User: Standard
+    AP_GROUPINFO("GAIN_INKTX",    16, MW_INDI, _Ink_Tx, 0.1f),                    //_delay_type 0,1,2; _Inc_k_Tx=0.1,0.5,0.5;
+
+    // @Param: GAIN_INAILERON
+    // @DisplayName: Incremental gain of aileron
+    // @Description: This is the gain to adjust the incremental size when calculating desired aileron
+    // @Increment: unknown
+    // @Range: unknown
+    // @User: Standard
+    AP_GROUPINFO("GAIN_INAILERON",    17, MW_INDI, _Ink_aileron, 0.03f),          //_delay_type 0,1,2; _Inc_k_aileron=0.03,0.1,0.1;
+
+    // @Param: GAIN_INELEVATOR
+    // @DisplayName: Incremental gain of elevator
+    // @Description: This is the gain to adjust the incremental size when calculating desired elevator
+    // @Increment: unknown
+    // @Range: unknown
+    // @User: Standard
+    AP_GROUPINFO("GAIN_INElEVATOR",    18, MW_INDI, _Ink_elevator, 0.03f),        //_delay_type 0,1,2; _Inc_k_elevator=0.03,0.1,0.1;
+
+    // @Param: GAIN_RUDDER
+    // @DisplayName: Incremental gain of rudder
+    // @Description: This is the gain to adjust the incremental size when calculating desired rudder
+    // @Increment: unknown
+    // @Range: unknown
+    // @User: Standard
+    AP_GROUPINFO("GAIN_INRUDDER",    19, MW_INDI, _Ink_rudder, 0.03f),            //_delay_type 0,1,2; _Inc_k_rudder=0.03,0.1,0.1;
+
+    // @Param: REF_AREA
+    // @DisplayName: Reference area
+    // @Description: Aircraft's reference wing area, unit m^2
+    // @Increment: unknown
+    // @Range: unknown
+    // @User: Standard
+    AP_GROUPINFO("REF_AREA",    20, MW_INDI, ref_area, 0.982f),                     //Rescall 0.982; Skywalker 0.165;
+
+    // @Param: REF_C
+    // @DisplayName: Reference cord length
+    // @Description: Aircraft's reference chord length, unit m
+    // @Increment: unknown
+    // @Range: unknown
+    // @User: Standard
+    AP_GROUPINFO("REF_C",    21, MW_INDI, ref_c, 0.351f),                           //Rescall 0.351; Skywalker 0.15;
+
+    // @Param: REF_B
+    // @DisplayName: Reference wing span
+    // @Description: Aircraft's reference wing span, unit m
+    // @Increment: unknown
+    // @Range: unknown
+    // @User: Standard
+    AP_GROUPINFO("REF_B",    22, MW_INDI, ref_b, 2.795f),                           //Rescall 2.795; Skywalker 1.01;
+
+    // @Param: MASS
+    // @DisplayName: Mass
+    // @Description: Vehicle mass, unit kg
+    // @Increment: unknown
+    // @Range: unknown
+    // @User: Standard
+    AP_GROUPINFO("MASS",    23, MW_INDI, mass, 5.897f),                             //Rescall 5.897; Skywalker 0.85;
+
+    // @Param: T_MAX
+    // @DisplayName: Maximum thrust
+    // @Description: Maximum thrust in x axis, unit N
+    // @Increment: unknown
+    // @Range: unknown
+    // @User: Standard
+    AP_GROUPINFO("T_MAX",    24, MW_INDI, T_max, 8.0f),                             //Rescall 80; Skywalker 8;
 
 	AP_GROUPEND
 };
@@ -422,7 +497,7 @@ void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Lo
 	////////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////Translational dynamic control lopp in INDI/////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////
-	m = vehicle_mass; //mass unit kg
+	m = mass; //mass unit kg
 	x1 = Vector3f(V, chi, gamma);
 	
 	//calculate desired velocity change rate
@@ -437,9 +512,9 @@ void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Lo
 	d_x1_des = Vector3f(d_V_des, d_chi_des, d_gamma_des);
 
 
-	double a11 = -0.5 * air_density * sq(V) * reference_area * CD_alpha - T_x * sinf(alpha);
+	double a11 = -0.5 * air_density * sq(V) * ref_area * CD_alpha - T_x * sinf(alpha);
 	double a12 = cosf(alpha);
-	double a21 = -0.5 * air_density * sq(V) * reference_area * CL_alpha * cosf(mu) - T_x * cosf(mu) * cosf(alpha);
+	double a21 = -0.5 * air_density * sq(V) * ref_area * CL_alpha * cosf(mu) - T_x * cosf(mu) * cosf(alpha);
 	double a22 = -cosf(mu) * sinf(alpha);
 
 
@@ -449,16 +524,16 @@ void MW_INDI::trajectory_control(const struct Location& prev_WP, const struct Lo
     increm_alpha = constrain_float((float) increm_alpha, -10, 10);
     increm_T_x = constrain_float((float) increm_T_x, -20, 20);
     if (_delay_type == 0) {
-        alpha_ref = constrain_float(alpha + 0.3 * increm_alpha, -M_PI/4, M_PI/4);
-        T_x = constrain_float(T_x_last + 0.1 * increm_T_x, T_min, T_max);
+        alpha_ref = constrain_float(alpha + _Ink_alp * increm_alpha, -M_PI / 4, M_PI / 4);
+        T_x = constrain_float(T_x_last + _Ink_Tx * increm_T_x, T_min, T_max);
     } else if (_delay_type == 1) {
         _alpha_delay.update(alpha, now);
-        alpha_ref = constrain_float(_alpha_delay.delay_output() + 0.8*increm_alpha, -M_PI/4, M_PI/4);
+        alpha_ref = constrain_float(_alpha_delay.delay_output() + _Ink_alp * increm_alpha, -M_PI / 4, M_PI / 4);
         _Tx_delay.update(T_x, now);
-        T_x = constrain_float(_Tx_delay.delay_output() + 0.5*increm_T_x, T_min, T_max);
+        T_x = constrain_float(_Tx_delay.delay_output() + _Ink_Tx * increm_T_x, T_min, T_max);
     } else if (_delay_type == 2) {
-        alpha_ref = constrain_float(alpha + increm_alpha, -M_PI/4, M_PI/4);
-        T_x = constrain_float(T_x_last + 0.1*increm_T_x, T_min, T_max);
+        alpha_ref = constrain_float(alpha + _Ink_alp * increm_alpha, -M_PI / 4, M_PI / 4);
+        T_x = constrain_float(T_x_last + _Ink_Tx * increm_T_x, T_min, T_max);
     }
 
 	T_x_last = T_x;
@@ -544,9 +619,9 @@ void MW_INDI::attitude_control()
 										0,				Cm_elavator,	0,
 										Cn_aileron,		0,				Cn_rudder);
 
-	Matrix3f M_reference = Matrix3f(	reference_b,	0,				0,
-										0,				reference_c,	0,
-										0,				0,				reference_b);
+	Matrix3f M_reference = Matrix3f(	ref_b,	        0,				0,
+										0,				ref_c,	        0,
+										0,				0,				ref_b);
 
 	Matrix3f M_inertia = Matrix3f(	0.5,		0,		    0,
 									0,		    0.4,		0,
@@ -555,30 +630,33 @@ void MW_INDI::attitude_control()
 	M_reference.invert();
 	
 	Vector3f delta_x4;
-	delta_x4 = M_coefficent* M_reference * M_inertia * (d_x3_des- d_x3)* (1 / (0.5 * air_density * sq(V) * reference_area));
+	delta_x4 = M_coefficent* M_reference * M_inertia * (d_x3_des- d_x3)* (1 / (0.5 * air_density * sq(V) * ref_area));
 
 	//Calculate actuator deflection according to delay type
     if (_delay_type == 0) {
         aileron = aileron_last
-                + 0.03 * constrain_float(delta_x4.x, -0.3, 0.3);
+                + _Ink_aileron * constrain_float(delta_x4.x, -0.3, 0.3);
         elevator = elevator_last
-                + 0.03 * constrain_float(delta_x4.y, -0.3, 0.3);
+                + _Ink_elevator * constrain_float(delta_x4.y, -0.3, 0.3);
         rudder = rudder_last
-                + 0.03 * constrain_float(delta_x4.z, -0.3, 0.3);
+                + _Ink_rudder * constrain_float(delta_x4.z, -0.3, 0.3);
     } else if (_delay_type == 1) {
         _aileron_delay.update(aileron, now);
         aileron = _aileron_delay.delay_output()
-                + 0.1 * constrain_float(delta_x4.x, -0.3, 0.3);
+                + _Ink_aileron * constrain_float(delta_x4.x, -0.3, 0.3);
         _elevator_delay.update(elevator, now);
         elevator = _elevator_delay.delay_output()
-                + 0.1 * constrain_float(delta_x4.y, -0.3, 0.3);
+                + _Ink_elevator * constrain_float(delta_x4.y, -0.3, 0.3);
         _rudder_delay.update(rudder, now);
         rudder = _rudder_delay.delay_output()
-                + 0.1 * constrain_float(delta_x4.z, -0.3, 0.3);
+                + _Ink_rudder * constrain_float(delta_x4.z, -0.3, 0.3);
     } else if (_delay_type == 2) {
-        aileron = aileron_last + 0.1*constrain_float(delta_x4.x, -0.3, 0.3);
-        elevator = elevator_last + 0.1*constrain_float(delta_x4.y, -0.3, 0.3);
-        rudder = rudder_last + 0.1*constrain_float(delta_x4.z, -0.3, 0.3);
+        aileron = aileron_last
+                + _Ink_aileron * constrain_float(delta_x4.x, -0.3, 0.3);
+        elevator = elevator_last
+                + _Ink_elevator * constrain_float(delta_x4.y, -0.3, 0.3);
+        rudder = rudder_last
+                + _Ink_rudder * constrain_float(delta_x4.z, -0.3, 0.3);
     }
 
 	// Constrain the actuator control output
