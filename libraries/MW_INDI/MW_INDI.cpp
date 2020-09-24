@@ -133,7 +133,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
     // @Increment: unknown
     // @Range: unknown
     // @User: Standard
-    AP_GROUPINFO("GAIN_INKALP",    15, MW_INDI, _Ink_alp, 0.3f),                  //_delay_type 0,1,2; _Inc_k_alp=0.3,0.8,1;
+    AP_GROUPINFO("GAIN_INKALP",    15, MW_INDI, _Ink_alp, 0.3f),                    //_delay_type 0,1,2; _Inc_k_alp=0.3,0.8,1;
 
     // @Param: GAIN_INKTX
     // @DisplayName: Incremental gain of thrust
@@ -141,31 +141,31 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
     // @Increment: unknown
     // @Range: unknown
     // @User: Standard
-    AP_GROUPINFO("GAIN_INKTX",    16, MW_INDI, _Ink_Tx, 0.1f),                    //_delay_type 0,1,2; _Inc_k_Tx=0.1,0.5,0.5;
+    AP_GROUPINFO("GAIN_INKTX",    16, MW_INDI, _Ink_Tx, 0.1f),                      //_delay_type 0,1,2; _Inc_k_Tx=0.1,0.5,0.5;
 
-    // @Param: GAIN_INAILERON
+    // @Param: GAIN_INAI
     // @DisplayName: Incremental gain of aileron
     // @Description: This is the gain to adjust the incremental size when calculating desired aileron
     // @Increment: unknown
     // @Range: unknown
     // @User: Standard
-    AP_GROUPINFO("GAIN_INAILERON",    17, MW_INDI, _Ink_aileron, 0.03f),          //_delay_type 0,1,2; _Inc_k_aileron=0.03,0.1,0.1;
+    AP_GROUPINFO("GAIN_INKAI",    17, MW_INDI, _Ink_aileron, 0.03f),                 //_delay_type 0,1,2; _Inc_k_aileron=0.03,0.1,0.1;
 
-    // @Param: GAIN_INELEVATOR
+    // @Param: GAIN_INEL
     // @DisplayName: Incremental gain of elevator
     // @Description: This is the gain to adjust the incremental size when calculating desired elevator
     // @Increment: unknown
     // @Range: unknown
     // @User: Standard
-    AP_GROUPINFO("GAIN_INElEVATOR",    18, MW_INDI, _Ink_elevator, 0.03f),        //_delay_type 0,1,2; _Inc_k_elevator=0.03,0.1,0.1;
+    AP_GROUPINFO("GAIN_INKEl",    18, MW_INDI, _Ink_elevator, 0.03f),                //_delay_type 0,1,2; _Inc_k_elevator=0.03,0.1,0.1;
 
-    // @Param: GAIN_RUDDER
+    // @Param: GAIN_INRU
     // @DisplayName: Incremental gain of rudder
     // @Description: This is the gain to adjust the incremental size when calculating desired rudder
     // @Increment: unknown
     // @Range: unknown
     // @User: Standard
-    AP_GROUPINFO("GAIN_INRUDDER",    19, MW_INDI, _Ink_rudder, 0.03f),            //_delay_type 0,1,2; _Inc_k_rudder=0.03,0.1,0.1;
+    AP_GROUPINFO("GAIN_INKRU",    19, MW_INDI, _Ink_rudder, 0.03f),                  //_delay_type 0,1,2; _Inc_k_rudder=0.03,0.1,0.1;
 
     // @Param: REF_AREA
     // @DisplayName: Reference area
@@ -173,7 +173,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
     // @Increment: unknown
     // @Range: unknown
     // @User: Standard
-    AP_GROUPINFO("REF_AREA",    20, MW_INDI, ref_area, 0.982f),                     //Rescall 0.982; Skywalker 0.165;
+    AP_GROUPINFO("REF_AREA",    20, MW_INDI, ref_area, 0.152f),                     //Rescall 0.982; Skywalker 0.152;
 
     // @Param: REF_C
     // @DisplayName: Reference cord length
@@ -181,7 +181,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
     // @Increment: unknown
     // @Range: unknown
     // @User: Standard
-    AP_GROUPINFO("REF_C",    21, MW_INDI, ref_c, 0.351f),                           //Rescall 0.351; Skywalker 0.15;
+    AP_GROUPINFO("REF_C",    21, MW_INDI, ref_c, 0.15f),                           //Rescall 0.351; Skywalker 0.15;
 
     // @Param: REF_B
     // @DisplayName: Reference wing span
@@ -189,7 +189,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
     // @Increment: unknown
     // @Range: unknown
     // @User: Standard
-    AP_GROUPINFO("REF_B",    22, MW_INDI, ref_b, 2.795f),                           //Rescall 2.795; Skywalker 1.01;
+    AP_GROUPINFO("REF_B",    22, MW_INDI, ref_b, 1.1f),                           //Rescall 2.795; Skywalker 1.1;
 
     // @Param: MASS
     // @DisplayName: Mass
@@ -197,7 +197,7 @@ const AP_Param::GroupInfo MW_INDI::var_info[] = {
     // @Increment: unknown
     // @Range: unknown
     // @User: Standard
-    AP_GROUPINFO("MASS",    23, MW_INDI, mass, 5.897f),                             //Rescall 5.897; Skywalker 0.85;
+    AP_GROUPINFO("MASS",    23, MW_INDI, mass, 0.85f),                             //Rescall 5.897; Skywalker 0.85;
 
     // @Param: T_MAX
     // @DisplayName: Maximum thrust
@@ -623,9 +623,9 @@ void MW_INDI::attitude_control()
 										0,				ref_c,	        0,
 										0,				0,				ref_b);
 
-	Matrix3f M_inertia = Matrix3f(	0.5,		0,		    0,
-									0,		    0.4,		0,
-									0,		    0   ,		0.5);
+	Matrix3f M_inertia = Matrix3f(	0.4,		0,		    0,
+									0,		    0.3,		0,
+									0,		    0   ,		0.4);
 	M_coefficent.invert();
 	M_reference.invert();
 	

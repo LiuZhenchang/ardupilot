@@ -12,12 +12,12 @@
     </fileheader>
 
     <metrics>
-        <wingarea unit="FT2"> 10.57 </wingarea>
-        <wingspan unit="FT"> 9.17 </wingspan>
-        <chord unit="FT"> 1.15 </chord>
-        <htailarea unit="FT2"> 1.69 </htailarea>
-        <htailarm unit="FT"> 3.28 </htailarm>
-        <vtailarea unit="FT2"> 1.06 </vtailarea>
+        <wingarea unit="FT2"> 1.64 </wingarea>
+        <wingspan unit="FT"> 3.61 </wingspan>
+        <chord unit="FT"> 0.49 </chord>
+        <htailarea unit="FT2"> 0.26 </htailarea>
+        <htailarm unit="FT"> 1.29 </htailarm>
+        <vtailarea unit="FT2"> 0.164 </vtailarea>
         <vtailarm unit="FT"> 0 </vtailarm>
         <location name="AERORP" unit="IN">
             <x> 37.4 </x>

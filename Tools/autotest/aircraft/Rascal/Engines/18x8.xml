@@ -10,8 +10,8 @@
 -->
 
 <propeller name="Rascal Propeller">
-  <ixx> 0.00085 </ixx>
-  <diameter unit="IN"> 18.0 </diameter>
+  <ixx> 0.000085 </ixx>
+  <diameter unit="IN"> 1.8 </diameter>
   <numblades> 2 </numblades>
   <minpitch> 30 </minpitch>
   <maxpitch> 30 </maxpitch>
